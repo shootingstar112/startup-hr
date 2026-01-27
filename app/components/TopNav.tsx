@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Menu = {
   key: string;
@@ -75,75 +75,201 @@ function isActivePath(pathname: string, menuHref: string) {
   return pathname === menuHref || pathname.startsWith(menuHref + "/");
 }
 
-// ...위 MENUS 동일
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
 
 export default function TopNav({ year = 2026 }: { year?: number }) {
   const pathname = usePathname();
-
   const activeMenuKey = useMemo(() => {
     const found = MENUS.find((m) => isActivePath(pathname, m.href));
     return found?.key ?? null;
   }, [pathname]);
 
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  // 버튼 ref (모바일 위치 계산용)
+  const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  // 모바일 드롭다운 위치
+  const [mobilePos, setMobilePos] = useState<{ top: number; left: number; width: number } | null>(
+    null
+  );
+
+  // 바깥 클릭 닫기
+  useEffect(() => {
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      if (!rootRef.current) return;
+      if (!rootRef.current.contains(e.target as Node)) setOpenKey(null);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("touchstart", onDown);
+    };
+  }, []);
+
+  // ✅ 모바일에서 누른 버튼 바로 밑 + 화면 밖 clamp
+  useEffect(() => {
+    if (!openKey) {
+      setMobilePos(null);
+      return;
+    }
+
+    const calc = () => {
+      const btn = btnRefs.current[openKey];
+      if (!btn) return;
+
+      const r = btn.getBoundingClientRect();
+      const desiredWidth = 260; // ✅ 좌우 너무 넓지 않게
+      const padding = 12;
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      const width = Math.min(desiredWidth, vw - padding * 2);
+      let left = r.left + r.width / 2 - width / 2;
+      left = clamp(left, padding, vw - padding - width);
+
+      let top = r.bottom + 8;
+      top = Math.min(top, vh - 80);
+
+      setMobilePos({ top: Math.round(top), left: Math.round(left), width: Math.round(width) });
+    };
+
+    calc();
+    window.addEventListener("resize", calc);
+    window.addEventListener("scroll", calc, { passive: true });
+    return () => {
+      window.removeEventListener("resize", calc);
+      window.removeEventListener("scroll", calc);
+    };
+  }, [openKey]);
+
+  const close = () => setOpenKey(null);
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white">
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="flex h-16 items-center gap-6">
+    <header className="sticky top-0 z-50 bg-white border-b">
+      <div ref={rootRef} className="mx-auto max-w-6xl px-4">
+        {/* 1줄 */}
+        <div className="flex items-center py-4">
           <Link href="/" className="flex items-center gap-3">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-slate-900 text-white font-black">
               HR
             </div>
-            <div className="text-lg font-black tracking-tight">스타트업-HR</div>
+            <div className="text-lg font-black whitespace-nowrap">스타트업-HR</div>
           </Link>
 
-          <nav className="relative ml-4" onMouseLeave={() => setOpenKey(null)}>
-            <ul className="flex items-center gap-8">
-              {MENUS.map((m) => {
-                const active = activeMenuKey === m.key; // ✅ 현재 페이지 강조만
-                return (
-                  <li key={m.key} className="relative">
-                    <Link
-                      href={m.href}
-                      onMouseEnter={() => setOpenKey(m.key)}
-                      onFocus={() => setOpenKey(m.key)}
-                      className={[
-                        "inline-flex items-center text-base font-extrabold",
-                        active ? "text-blue-700" : "text-slate-900 hover:text-blue-700",
-                      ].join(" ")}
-                    >
-                      {m.label}
-                    </Link>
-
-                    {/* ✅ hover(openKey)일 때만 드롭다운 */}
-                    {openKey === m.key && (
-                      <div
-                        className="absolute left-0 top-full mt-3 w-56 overflow-hidden rounded-md border bg-white shadow-lg"
-                        onMouseEnter={() => setOpenKey(m.key)}
-                      >
-                        {m.children.map((c) => (
-                          <Link
-                            key={c.href}
-                            href={c.href}
-                            className="block px-4 py-3 text-sm font-bold text-slate-900 hover:bg-blue-600 hover:text-white"
-                          >
-                            {c.label}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-
-          <div className="ml-auto text-sm font-extrabold text-slate-700">
-            기준년도: <span className="text-slate-900">{year}</span>
+          <div className="ml-auto">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-extrabold whitespace-nowrap">
+              기준년도 {year}
+            </span>
           </div>
         </div>
+
+        {/* 2줄 메뉴 */}
+        <nav className="relative">
+          <ul
+            className="
+              grid grid-cols-3 gap-x-4 gap-y-2 py-3
+              md:flex md:justify-center md:gap-10
+            "
+          >
+            {MENUS.map((m) => {
+              const active = activeMenuKey === m.key;
+              const isOpen = openKey === m.key;
+
+              return (
+                <li
+                  key={m.key}
+                  className="relative flex justify-center"
+                  // ✅ PC hover: li 영역 안에서만 열림/유지됨
+                  onMouseEnter={() => setOpenKey(m.key)}
+                  onMouseLeave={() => setOpenKey(null)}
+                >
+                  <button
+                    ref={(el) => {
+                      btnRefs.current[m.key] = el;
+                    }}
+                    type="button"
+                    onClick={() => setOpenKey((prev) => (prev === m.key ? null : m.key))}
+                    className="
+  relative px-3 py-2
+  text-[18px] md:text-[18px] lg:text-[19px]
+  font-extrabold
+  whitespace-nowrap break-keep
+  hover:text-blue-700 transition
+"
+                    aria-haspopup="menu"
+                    aria-expanded={isOpen}
+                  >
+                    {m.label}
+                    <span
+                      className={[
+                        "absolute left-0 -bottom-1 h-[3px] w-full transition",
+                        active || isOpen ? "bg-slate-900" : "bg-transparent",
+                      ].join(" ")}
+                    />
+                  </button>
+
+                  {/* ✅ PC 드롭다운: 버튼 바로 밑, mt 최소(틈 거의 없음) */}
+                  {isOpen && (
+                    <div
+                      className="
+                        hidden md:block absolute top-full mt-1 left-1/2 -translate-x-1/2
+                        w-64 rounded-xl bg-white shadow-xl py-2 z-50
+                      "
+                      role="menu"
+                      onMouseEnter={() => setOpenKey(m.key)} // 드롭다운 위에서도 유지
+                    >
+                      {m.children.map((c) => (
+                        <Link
+                          key={c.href}
+                          href={c.href}
+                          onClick={close}
+                          className="block px-5 py-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
+                          role="menuitem"
+                        >
+                          {c.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
       </div>
+
+      {/* ✅ 모바일 드롭다운: 버튼 바로 밑 fixed + clamp */}
+      {openKey && mobilePos && (
+        <div
+          className="md:hidden fixed z-[9999] rounded-xl bg-white shadow-xl py-2"
+          style={{
+            top: mobilePos.top,
+            left: mobilePos.left,
+            width: mobilePos.width,
+            maxHeight: "60vh",
+            overflowY: "auto",
+          }}
+          role="menu"
+        >
+          {MENUS.find((m) => m.key === openKey)?.children.map((c) => (
+            <Link
+              key={c.href}
+              href={c.href}
+              onClick={close}
+              className="block px-5 py-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
+              role="menuitem"
+            >
+              {c.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </header>
   );
 }
