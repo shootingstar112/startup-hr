@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 type Tab = {
   key: string;
@@ -18,22 +18,23 @@ export default function SectionTabs({
   defaultTab: string;
   syncQuery?: boolean;
 }) {
-  const sp = useSearchParams();
   const router = useRouter();
 
-  const initial = useMemo(() => {
-    if (!syncQuery) return defaultTab;
-    const q = sp.get("tab");
-    if (q && tabs.some((t) => t.key === q)) return q;
-    return defaultTab;
-  }, [sp, tabs, defaultTab, syncQuery]);
+  // 서버/빌드 단계에서는 window가 없으니까 defaultTab로 시작
+  const [active, setActive] = useState(defaultTab);
 
-  const [active, setActive] = useState(initial);
-
+  // 클라이언트 마운트 이후에만 URL에서 tab 읽기 (프리렌더 에러 방지)
   useEffect(() => {
-    // 뒤로가기/새로고침에도 맞추기
-    setActive(initial);
-  }, [initial]);
+    if (!syncQuery) return;
+
+    const q = new URLSearchParams(window.location.search).get("tab");
+    if (q && tabs.some((t) => t.key === q)) {
+      setActive(q);
+    } else {
+      setActive(defaultTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncQuery, defaultTab, tabs]);
 
   const onClick = (key: string) => {
     setActive(key);
@@ -69,10 +70,7 @@ export default function SectionTabs({
 
       <div className="mt-4">
         {tabs.map((t) => (
-          <section
-            key={t.key}
-            style={{ display: t.key === active ? "block" : "none" }} // ✅ 네가 말한 display 토글
-          >
+          <section key={t.key} style={{ display: t.key === active ? "block" : "none" }}>
             {t.content}
           </section>
         ))}

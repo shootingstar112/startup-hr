@@ -1,5 +1,4 @@
-import SectionTabsWrapper from "../components/SectionTabsWrapper";
-
+import SectionTabs from "../components/SectionTabs";
 
 function HourlyCalc() {
   return (
@@ -25,7 +24,7 @@ export default function Page() {
       <h1 className="text-3xl font-black">시급</h1>
 
       <div className="mt-6">
-        <SectionTabsWrapper
+        <SectionTabs
           defaultTab="calc"
           tabs={[
             { key: "calc", label: "시급 계산기", content: <HourlyCalc /> },
