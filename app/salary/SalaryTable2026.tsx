@@ -286,17 +286,6 @@ function jumpTo(annualManRaw: number) {
 }
 
 
-  const quickJumps = [
-    { label: "3,000", man: 3000 },
-    { label: "5,000", man: 5000 },
-    { label: "6,200", man: 6200 },
-    { label: "1억", man: 10000 },
-    { label: "1.5억", man: 15000 },
-    { label: "2억", man: 20000 },
-    { label: "3억", man: 30000 },
-    { label: "5억", man: 50000 },
-  ];
-
   return (
     // ✅ overflow-hidden으로 sticky가 “카드 내부에 갇히는” 느낌 나는 경우 많아서 제거/완화
     <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -421,19 +410,7 @@ function jumpTo(annualManRaw: number) {
               </div>
             </form>
 
-            {/* 퀵 점프 */}
-            <div className="order-1 sm:order-2 flex flex-wrap gap-2">
-              {quickJumps.map((q) => (
-                <button
-                  key={q.man}
-                  type="button"
-                  onClick={() => jumpTo(q.man)}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-700 hover:bg-slate-50"
-                >
-                  {q.label}
-                </button>
-              ))}
-            </div>
+
           </div>
         </div>
       </div>
