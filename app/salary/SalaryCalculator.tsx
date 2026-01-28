@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef, } from "react";
 import { calculateSalary } from "./salary.logic";
 
 
@@ -32,13 +32,46 @@ function KRW({ n }: { n: number }) {
   return <span>{Math.round(n).toLocaleString("ko-KR")}원</span>;
 }
 
+
 function Tip({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [leftPx, setLeftPx] = useState(0);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const TIP_W = 300; // 툴팁 폭(너 지금 w-[300px])
+    const PAD = 12; // 화면 가장자리 여백
+
+    const calc = () => {
+      const r = btnRef.current?.getBoundingClientRect();
+      if (!r) return;
+
+      // 버튼 왼쪽 기준으로 띄우되, 화면 밖으로 나가면 clamp
+      const idealLeft = r.left; // viewport 기준
+      const maxLeft = Math.max(PAD, window.innerWidth - TIP_W - PAD);
+      const clamped = Math.min(Math.max(idealLeft, PAD), maxLeft);
+
+      // 부모(relative) 기준으로 쓰기 위해, 버튼의 offsetLeft 기준으로 변환하면 복잡해짐
+      // 그래서 툴팁을 fixed로 띄우고 leftPx를 viewport 기준으로 사용
+      setLeftPx(clamped);
+    };
+
+    calc();
+    window.addEventListener("resize", calc);
+    window.addEventListener("scroll", calc, true);
+
+    return () => {
+      window.removeEventListener("resize", calc);
+      window.removeEventListener("scroll", calc, true);
+    };
+  }, [open]);
 
   return (
     <span className="relative inline-flex">
-      {/* ✅ 버튼만 클릭되게: 절대영역 없이 버튼 자체만 */}
       <button
+        ref={btnRef}
         type="button"
         onClick={(e) => {
           e.preventDefault();
@@ -51,7 +84,7 @@ function Tip({ title, children }: { title: string; children: React.ReactNode }) 
         ?
       </button>
 
-      {/* ✅ 오버레이: 툴팁보다 아래(z-40), 하지만 화면 전체 클릭 잡기 */}
+      {/* 바깥 클릭 닫기 */}
       {open && (
         <span
           className="fixed inset-0 z-40"
@@ -59,10 +92,14 @@ function Tip({ title, children }: { title: string; children: React.ReactNode }) 
         />
       )}
 
-      {/* ✅ 툴팁 박스: 오버레이보다 위(z-50) */}
+      {/* ✅ 툴팁을 fixed로: viewport 기준으로 clamp된 leftPx 적용 */}
       {open && (
         <div
-          className="absolute left-0 top-7 z-50 w-[300px] rounded-2xl border bg-white p-3 shadow-xl"
+          className="fixed z-50 w-[300px] rounded-2xl border bg-white p-3 shadow-xl"
+          style={{
+            left: leftPx,
+            top: (btnRef.current?.getBoundingClientRect().bottom ?? 0) + 8,
+          }}
           onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="text-sm font-black">{title}</div>
@@ -188,7 +225,11 @@ export default function SalaryCalculator() {
             <div className="grid gap-2">
               <div className="flex items-center text-sm font-extrabold text-slate-700">
                 퇴직금
-                <Tip title="퇴직금"> ... </Tip>
+                <Tip title="퇴직금">
+  연봉에 퇴직금이 포함된 경우 “포함(13분할)”로 계산합니다.
+  포함 여부는 근로계약서를 기준으로 확인하세요.
+</Tip>
+
               </div>
 
               <div className="w-full">
