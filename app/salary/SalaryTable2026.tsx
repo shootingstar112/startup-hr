@@ -267,7 +267,6 @@ useLayoutEffect(() => {
       setHighlightExactMan(v);
       setHighlightAround(null);
       setPendingScrollMan(v);
-      scheduleClearHighlights(2500);
       return;
     }
 
@@ -284,7 +283,6 @@ useLayoutEffect(() => {
     const nearest = v - clLow <= clHigh - v ? clLow : clHigh;
     setPendingScrollMan(nearest);
 
-    scheduleClearHighlights(2500);
   }
 
   const quickJumps = [
