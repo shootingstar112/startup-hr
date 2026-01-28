@@ -411,12 +411,17 @@ export default function SalaryTable2026() {
 
       {/* ✅ 3) 표는 아래로. “연봉 실수령액표” 영역이 sticky 안으로 말려들어갈 구조 자체가 사라짐 */}
       <div className="p-4 sm:p-5">
+        
+        <div className="mt-3 text-xs font-semibold text-slate-500">
+          ※ 표는 “간이세액표 기반” 참고용입니다. (회사별 절사/기준소득월액/보험
+          상·하한 등에 따라 실지급과 차이 가능)
+        </div>
         <div
           ref={scrollerRef}
-          className="max-h-[52vh] sm:max-h-[70vh] overflow-auto overscroll-contain rounded-2xl border border-slate-200"
-
+          className="max-h-[calc(100dvh-360px)] sm:max-h-[70vh] overflow-auto overscroll-contain rounded-2xl border border-slate-200 pb-10 scroll-pb-10"
         >
-          <table className="min-w-[980px] w-full border-separate border-spacing-0">
+         <table className="min-w-[980px] w-full border-separate border-spacing-0 mb-6">
+
             <thead className="sticky top-0 z-20 bg-slate-50">
               <tr>
                 <Th stickyLeft>연봉</Th>
@@ -457,11 +462,6 @@ export default function SalaryTable2026() {
               })}
             </tbody>
           </table>
-        </div>
-
-        <div className="mt-3 text-xs font-semibold text-slate-500">
-          ※ 표는 “간이세액표 기반” 참고용입니다. (회사별 절사/기준소득월액/보험
-          상·하한 등에 따라 실지급과 차이 가능)
         </div>
       </div>
     </div>
