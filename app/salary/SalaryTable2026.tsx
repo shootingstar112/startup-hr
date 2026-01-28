@@ -190,41 +190,61 @@ export default function SalaryTable2026() {
   }, []);
 
   // ✅ 내부 스크롤만 사용 + DOM 배치 직후 처리
-  useLayoutEffect(() => {
-    if (pendingScrollMan == null) return;
+useLayoutEffect(() => {
+  if (pendingScrollMan == null) return;
 
-    const raf = requestAnimationFrame(() => {
-      const sc = scrollerRef.current;
-      const el = document.getElementById(rowId(pendingScrollMan));
-      if (!sc || !el) {
+  let raf1 = 0;
+  let raf2 = 0;
+  let raf3 = 0;
+
+  const tryScroll = () => {
+    const sc = scrollerRef.current;
+    const el = document.getElementById(rowId(pendingScrollMan));
+    if (!sc || !el) return false;
+
+    const scRect = sc.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+
+    // ✅ sticky thead 높이(모바일/PC 자동 반영)
+    const theadEl = sc.querySelector("thead") as HTMLElement | null;
+    const theadH = theadEl ? theadEl.getBoundingClientRect().height : 0;
+
+    const viewH = sc.clientHeight - theadH;
+
+    const delta =
+      (elRect.top - scRect.top) - // scroller top 기준 el 위치
+      theadH -                    // 헤더 높이 제외
+      viewH / 2 +                 // 가운데로
+      elRect.height / 2;          // 행 가운데
+
+    sc.scrollTo({ top: sc.scrollTop + delta, behavior: "smooth" });
+    return true;
+  };
+
+  // ✅ 2프레임 대기: 상태변경(openRanges)로 rows가 바뀌고 레이아웃이 확정된 뒤 실행
+  raf1 = requestAnimationFrame(() => {
+    raf2 = requestAnimationFrame(() => {
+      // 첫 시도
+      if (tryScroll()) {
         setPendingScrollMan(null);
         return;
       }
 
-const scRect = sc.getBoundingClientRect();
-const elRect = el.getBoundingClientRect();
-
-// ✅ sticky thead 높이(모바일/PC 자동 반영)
-const theadEl = sc.querySelector("thead") as HTMLElement | null;
-const theadH = theadEl ? theadEl.getBoundingClientRect().height : 0;
-
-// ✅ “실제로 보이는 영역” 높이 = scroller 높이 - sticky 헤더 높이
-const viewH = sc.clientHeight - theadH;
-
-// ✅ 목표: 헤더 아래(view 영역)의 가운데로 이동
-const delta =
-  (elRect.top - scRect.top) -          // scroller top 기준 el의 현재 위치
-  theadH -                              // 헤더 높이만큼 빼고(헤더 아래 기준)
-  viewH / 2 +                           // 가운데로 맞추기
-  elRect.height / 2;                    // 행 자체의 가운데
-
-sc.scrollTo({ top: sc.scrollTop + delta, behavior: "smooth" });
-
-      setPendingScrollMan(null);
+      // 그래도 DOM 없으면 한 프레임 더(아주 드물게 필요)
+      raf3 = requestAnimationFrame(() => {
+        tryScroll();
+        setPendingScrollMan(null);
+      });
     });
+  });
 
-    return () => cancelAnimationFrame(raf);
-  }, [pendingScrollMan]);
+  return () => {
+    if (raf1) cancelAnimationFrame(raf1);
+    if (raf2) cancelAnimationFrame(raf2);
+    if (raf3) cancelAnimationFrame(raf3);
+  };
+}, [pendingScrollMan]);
+
 
   const doSearch = useCallback(() => {
     const v = Number(onlyDigits(queryManText) || "0");
