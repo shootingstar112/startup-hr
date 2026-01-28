@@ -201,15 +201,25 @@ export default function SalaryTable2026() {
         return;
       }
 
-      const scRect = sc.getBoundingClientRect();
-      const elRect = el.getBoundingClientRect();
-      const delta =
-        elRect.top -
-        scRect.top -
-        sc.clientHeight / 2 +
-        el.clientHeight / 2;
+const scRect = sc.getBoundingClientRect();
+const elRect = el.getBoundingClientRect();
 
-      sc.scrollTo({ top: sc.scrollTop + delta, behavior: "smooth" });
+// ✅ sticky thead 높이(모바일/PC 자동 반영)
+const theadEl = sc.querySelector("thead") as HTMLElement | null;
+const theadH = theadEl ? theadEl.getBoundingClientRect().height : 0;
+
+// ✅ “실제로 보이는 영역” 높이 = scroller 높이 - sticky 헤더 높이
+const viewH = sc.clientHeight - theadH;
+
+// ✅ 목표: 헤더 아래(view 영역)의 가운데로 이동
+const delta =
+  (elRect.top - scRect.top) -          // scroller top 기준 el의 현재 위치
+  theadH -                              // 헤더 높이만큼 빼고(헤더 아래 기준)
+  viewH / 2 +                           // 가운데로 맞추기
+  elRect.height / 2;                    // 행 자체의 가운데
+
+sc.scrollTo({ top: sc.scrollTop + delta, behavior: "smooth" });
+
       setPendingScrollMan(null);
     });
 
