@@ -250,40 +250,41 @@ useLayoutEffect(() => {
     const v = Number(onlyDigits(queryManText) || "0");
     if (v > 0) jumpTo(v);
   }, [queryManText]);
+function jumpTo(annualManRaw: number) {
+  const min = RANGES[0].fromMan;
+  const max = RANGES[RANGES.length - 1].toMan;
 
-  function jumpTo(annualManRaw: number) {
-    const min = RANGES[0].fromMan;
-    const max = RANGES[RANGES.length - 1].toMan;
+  const v = Math.max(min, Math.min(max, Math.floor(annualManRaw)));
+  const rangeKey = findRangeKey(v);
 
-    const v = Math.max(min, Math.min(max, Math.floor(annualManRaw)));
-    const rangeKey = findRangeKey(v);
+  // ✅ 새 검색 시작 → 이전 하이라이트 전부 초기화
+  setHighlightExactMan(null);
+  setHighlightAround(null);
 
-    // 해당 구간 펼치기
-    setOpenRanges((prev) => ({ ...prev, [rangeKey]: true }));
-    const r = RANGES.find((x) => x.key === rangeKey)!;
+  // 해당 구간 펼치기
+  setOpenRanges((prev) => ({ ...prev, [rangeKey]: true }));
+  const r = RANGES.find((x) => x.key === rangeKey)!;
 
-    // ✅ 정확히 100단위면 파란색
-    if (v % 100 === 0) {
-      setHighlightExactMan(v);
-      setHighlightAround(null);
-      setPendingScrollMan(v);
-      return;
-    }
-
-    // ✅ 사이값이면 아래/위 100단위 2줄 핑크
-    const low = Math.floor(v / 100) * 100;
-    const high = low + 100;
-
-    const clLow = Math.max(r.fromMan, Math.min(r.toMan, low));
-    const clHigh = Math.max(r.fromMan, Math.min(r.toMan, high));
-
-    setHighlightExactMan(null);
-    setHighlightAround([clLow, clHigh]);
-
-    const nearest = v - clLow <= clHigh - v ? clLow : clHigh;
-    setPendingScrollMan(nearest);
-
+  // ✅ 정확히 100단위
+  if (v % 100 === 0) {
+    setHighlightExactMan(v);
+    setPendingScrollMan(v);
+    return;
   }
+
+  // ✅ 사이값이면 아래/위 100단위 2줄
+  const low = Math.floor(v / 100) * 100;
+  const high = low + 100;
+
+  const clLow = Math.max(r.fromMan, Math.min(r.toMan, low));
+  const clHigh = Math.max(r.fromMan, Math.min(r.toMan, high));
+
+  setHighlightAround([clLow, clHigh]);
+
+  const nearest = v - clLow <= clHigh - v ? clLow : clHigh;
+  setPendingScrollMan(nearest);
+}
+
 
   const quickJumps = [
     { label: "3,000", man: 3000 },
