@@ -1,25 +1,25 @@
 import taxTable from "./tax_table_2026.json";
 
 export type SalaryInput = {
-  annualSalary: number;        // 연봉(총액)
-  annualNonTax: number;        // 연 비과세 합계(연간)
+  annualSalary: number;
+  annualNonTax: number;
   dependents: number;
   u20Children: number;
-  severanceIncluded: boolean;  // 포함=13분할, 별도=12분할
+  severanceIncluded: boolean;
 };
 
 export type SalaryOutput = {
-  months: number; // 12 or 13
+  months: number;
 
-  annualGross: number;   // 연 세전(총액)
-  annualTaxable: number; // 연 과세대상(=연 세전 - 연 비과세)
+  annualGross: number;
+  annualTaxable: number;
 
   annualPension: number;
   annualHealth: number;
   annualCare: number;
   annualEmployment: number;
 
-  annualIncomeTax: number; // (월 간이세액표 기반을 연으로 환산)
+  annualIncomeTax: number;
   annualLocalTax: number;
 
   annualTotalDeduction: number;
@@ -40,10 +40,6 @@ function roundWon(n: number) {
 
 /**
  * 2026 요율 (근로자 부담)
- * - 국민연금: 근로자 4.75%
- * - 건강보험: 근로자 3.595% (총 7.19%의 절반)
- * - 장기요양: 건강보험료의 13.14%  (= 총요율 0.9448%에 대응)
- * - 고용보험(실업급여): 근로자 0.9%
  */
 const INS_2026 = {
   pensionEmp: 0.0475,
@@ -53,9 +49,7 @@ const INS_2026 = {
 };
 
 /**
- * 2026 상/하한 (네가 준 값 그대로)
- * - 국민연금 기준소득월액: 400,000 ~ 6,370,000 (2025.7~2026.6)
- * - 건강보험 보수월액: 280,383 ~ 127,725,730 (2026.1~12)
+ * 2026 상/하한
  */
 const CAP_2026 = {
   pensionBaseMin: 400_000,
@@ -66,10 +60,9 @@ const CAP_2026 = {
 };
 
 // ====== 간이세액표 lookup ======
-
 type TaxRow = {
   max: number;
-  [k: string]: number; // "1"~"11"
+  [k: string]: any; // "1"~"11"
 };
 
 const TAX_KEYS = Object.keys(taxTable as any)
@@ -85,113 +78,187 @@ function childDeduction(u20Children: number) {
   return 29_160 + (n - 2) * 25_000;
 }
 
+/**
+ * ✅ wage 이하의 최대 key(이분탐색) 기반 + row.max 포함 구간 찾기
+ * (네가 준 버전 유지)
+ */
 function findBandKey(monthlyWageWon: number) {
-  if (TAX_KEYS.length === 0) return null;
+  const wage = Math.max(0, Math.floor(monthlyWageWon));
+  if (TAX_KEYS.length === 0) return "";
 
-  // 1) floor(<=)로 1차 선택
-  let lo = 0;
-  let hi = TAX_KEYS.length - 1;
-  let idx = 0;
-
+  let lo = 0, hi = TAX_KEYS.length - 1;
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
     const k = TAX_KEYS[mid];
-    if (k <= monthlyWageWon) {
-      idx = mid;
-      lo = mid + 1;
-    } else {
-      hi = mid - 1;
-    }
+    if (k <= wage) lo = mid + 1;
+    else hi = mid - 1;
   }
 
-  // 2) row.max 초과인데 다음 키로 못 넘어가는 “갭” 방지
-  while (idx < TAX_KEYS.length - 1) {
-    const keyStr = String(TAX_KEYS[idx]);
-    const row = (taxTable as any)[keyStr] as TaxRow | undefined;
-    if (!row) break;
+  let idx = Math.max(0, hi);
 
-    if (typeof row.max === "number" && monthlyWageWon > row.max) {
-      idx += 1; // 다음 구간으로
+  const maxSteps = Math.min(50, TAX_KEYS.length);
+  for (let step = 0; step < maxSteps; step++) {
+    const k = TAX_KEYS[idx];
+    const row = (taxTable as any)[String(k)] as TaxRow | undefined;
+
+    if (row?.max != null && k <= wage && wage <= row.max) return String(k);
+
+    if (row?.max == null || wage > row.max) {
+      if (idx < TAX_KEYS.length - 1) idx++;
+      else break;
       continue;
     }
+
+    if (wage < k) {
+      if (idx > 0) idx--;
+      else break;
+      continue;
+    }
+
     break;
   }
 
-  return String(TAX_KEYS[idx]);
+  if (wage < TAX_KEYS[0]) return String(TAX_KEYS[0]);
+
+  // ⚠️ 여기서 “마지막 리턴”은 유지하되,
+  // 실제 소득세 계산(lookupIncomeTax)에서 10,000,000 초과면 공식을 타게 만들거라 괜찮음.
+  return String(TAX_KEYS[TAX_KEYS.length - 1]);
 }
 
+/**
+ * ✅ (핵심) 표 마지막 max(=10,000,000) 초과 구간은
+ * 네가 준 ‘초과 구간 공식’으로 계산
+ */
 function lookupIncomeTax(monthlyWageWon: number, dependents: number, u20Children: number) {
   const dep = clampInt(dependents, 1, 11);
+  const wage = Math.max(0, Math.floor(monthlyWageWon));
 
-  const bandKey = findBandKey(monthlyWageWon);
-  if (!bandKey) return 0;
+  // --- 표의 마지막 max(대개 10,000,000) 가져오기 ---
+  const lastKeyNum = TAX_KEYS.length ? TAX_KEYS[TAX_KEYS.length - 1] : 0;
+  const lastRow = lastKeyNum ? ((taxTable as any)[String(lastKeyNum)] as TaxRow | undefined) : undefined;
+  const tableMax = lastRow?.max ?? 0;
 
-  const row = (taxTable as any)[bandKey] as TaxRow | undefined;
-  if (!row) return 0;
+  // --- 10,000,000(=10,000천원) 시점의 “해당세액” 구하기 ---
+  // json이 9,980,000~10,000,000 마지막 행으로 되어있으니,
+  // 10,000,000은 이 마지막 행의 dep 값을 “10,000천원인 경우의 해당세액”으로 사용.
+  const taxAt10M = (() => {
+    if (!lastRow) return 0;
+    const v = lastRow[String(dep)];
+    return typeof v === "number" ? v : 0;
+  })();
 
-  const base = typeof (row as any)[String(dep)] === "number" ? (row as any)[String(dep)] : 0;
-  return Math.max(0, base - childDeduction(u20Children));
+  // --- 10,000,000 이하: 기존처럼 표 lookup ---
+  if (wage <= tableMax) {
+    const bandKey = findBandKey(wage);
+    if (!bandKey) return 0;
+    const row = (taxTable as any)[bandKey] as TaxRow | undefined;
+    if (!row) return 0;
+
+    const base = typeof row[String(dep)] === "number" ? row[String(dep)] : 0;
+    return Math.max(0, base - childDeduction(u20Children));
+  }
+
+  // --- 10,000,000 초과: 네가 준 공식 적용 ---
+  // (스크린샷에 “98%를 곱한 금액”이 명시된 구간은 그대로 0.98 적용)
+  // (명시 없는 구간은 스샷대로 그대로 계산)
+  let baseHigh = 0;
+
+  if (wage > 10_000_000 && wage <= 14_000_000) {
+    // (10,000천원인 경우의 해당세액) + (초과금액*98%*35%) + 25,000
+    baseHigh =
+      taxAt10M +
+      (wage - 10_000_000) * 0.98 * 0.35 +
+      25_000;
+  } else if (wage > 14_000_000 && wage <= 28_000_000) {
+    // (10,000천원 해당세액) + 1,397,000 + ((14,000천원 초과분)*98%*38%)
+    baseHigh =
+      taxAt10M +
+      1_397_000 +
+      (wage - 14_000_000) * 0.98 * 0.38;
+  } else if (wage > 28_000_000 && wage <= 30_000_000) {
+    // (10,000천원 해당세액) + 6,610,600 + ((28,000천원 초과분)*98%*40%)
+    baseHigh =
+      taxAt10M +
+      6_610_600 +
+      (wage - 28_000_000) * 0.98 * 0.40;
+  } else if (wage > 30_000_000 && wage <= 45_000_000) {
+    // (10,000천원 해당세액) + 7,394,600 + ((30,000천원 초과분)*40%)
+    baseHigh =
+      taxAt10M +
+      7_394_600 +
+      (wage - 30_000_000) * 0.40;
+  } else if (wage > 45_000_000 && wage <= 87_000_000) {
+    // (10,000천원 해당세액) + 13,394,600 + ((45,000천원 초과분)*42%)
+    baseHigh =
+      taxAt10M +
+      13_394_600 +
+      (wage - 45_000_000) * 0.42;
+  } else {
+    // 87,000천원 초과:
+    // (10,000천원 해당세액) + 31,034,600 + ((87,000천원 초과분)*45%)
+    baseHigh =
+      taxAt10M +
+      31_034_600 +
+      (wage - 87_000_000) * 0.45;
+  }
+
+  const afterChild = Math.max(0, roundWon(baseHigh) - childDeduction(u20Children));
+  return afterChild;
 }
 
 export function calculateSalary(input: SalaryInput): SalaryOutput {
   const months = input.severanceIncluded ? 13 : 12;
 
-  // 내부 계산은 “월”로 나눠서(간이세액표가 월 기준이니까)
   const monthlyGross = input.annualSalary / months;
   const monthlyNonTax = input.annualNonTax / months;
   const monthlyTaxable = Math.max(0, monthlyGross - monthlyNonTax);
 
-  // ✅ 국민연금: 기준소득월액 상/하한 적용
+  // 4대보험(월)
   const pensionBase = clamp(monthlyTaxable, CAP_2026.pensionBaseMin, CAP_2026.pensionBaseMax);
-  const pension = pensionBase * INS_2026.pensionEmp;
+  const pension = roundWon(pensionBase * INS_2026.pensionEmp);
 
-  // ✅ 건강보험: 보수월액 상/하한 적용
   const healthBase = clamp(monthlyTaxable, CAP_2026.healthBaseMin, CAP_2026.healthBaseMax);
-  const health = healthBase * INS_2026.healthEmp;
+  const health = roundWon(healthBase * INS_2026.healthEmp);
 
-  // ✅ 장기요양: 건강보험료의 13.14%
-  const care = health * INS_2026.careOverHealth;
+  const care = roundWon(health * INS_2026.careOverHealth);
+  const employment = roundWon(monthlyTaxable * INS_2026.employmentEmp);
 
-  // 고용보험(실업급여): 근로자 0.9% (상/하한은 일단 미적용)
-  const employment = monthlyTaxable * INS_2026.employmentEmp;
-
-  // 소득세: 월 과세급여로 간이세액표 조회 → 월 값
-  const incomeTax = lookupIncomeTax(monthlyTaxable, input.dependents, input.u20Children);
-  const localTax = incomeTax * 0.1;
+  // ✅ 소득세/지방세: “월 간이세액표 + 초과구간 공식”
+  const incomeTax = roundWon(lookupIncomeTax(monthlyTaxable, input.dependents, input.u20Children));
+  const localTax = Math.floor(incomeTax * 0.1);
 
   const totalDeduction = pension + health + care + employment + incomeTax + localTax;
   const monthlyNet = monthlyGross - totalDeduction;
 
-  // 연 환산(반환은 “연”만)
-  const annualGross = monthlyGross * months;
-  const annualTaxable = monthlyTaxable * months;
+  // 연 환산
+  const annualGross = roundWon(monthlyGross * months);
+  const annualTaxable = roundWon(monthlyTaxable * months);
 
-  const annualPension = pension * months;
-  const annualHealth = health * months;
-  const annualCare = care * months;
-  const annualEmployment = employment * months;
+  const annualPension = roundWon(pension * months);
+  const annualHealth = roundWon(health * months);
+  const annualCare = roundWon(care * months);
+  const annualEmployment = roundWon(employment * months);
 
-  const annualIncomeTax = incomeTax * months;
-  const annualLocalTax = localTax * months;
+  const annualIncomeTax = roundWon(incomeTax * months);
+  const annualLocalTax = roundWon(localTax * months);
 
-  const annualTotalDeduction = totalDeduction * months;
-  const annualNet = monthlyNet * months;
+  const annualTotalDeduction = roundWon(totalDeduction * months);
+  const annualNet = roundWon(monthlyNet * months);
 
   return {
     months,
+    annualGross,
+    annualTaxable,
 
-    annualGross: roundWon(annualGross),
-    annualTaxable: roundWon(annualTaxable),
+    annualPension,
+    annualHealth,
+    annualCare,
+    annualEmployment,
 
-    annualPension: roundWon(annualPension),
-    annualHealth: roundWon(annualHealth),
-    annualCare: roundWon(annualCare),
-    annualEmployment: roundWon(annualEmployment),
+    annualIncomeTax,
+    annualLocalTax,
 
-    annualIncomeTax: roundWon(annualIncomeTax),
-    annualLocalTax: roundWon(annualLocalTax),
-
-    annualTotalDeduction: roundWon(annualTotalDeduction),
-    annualNet: roundWon(annualNet),
+    annualTotalDeduction,
+    annualNet,
   };
 }
