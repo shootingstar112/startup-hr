@@ -25,7 +25,10 @@ export type SalaryOutput = {
   annualTotalDeduction: number;
   annualNet: number;
 };
-
+function clampSafe(n: number, min: number, max: number) {
+  if (!Number.isFinite(n) || n <= 0) return 0; // ✅ NaN/0/음수면 0
+  return Math.max(min, Math.min(max, n));
+}
 function clampInt(n: number, min: number, max: number) {
   const v = Math.floor(Number.isFinite(n) ? n : min);
   return Math.max(min, Math.min(max, v));
