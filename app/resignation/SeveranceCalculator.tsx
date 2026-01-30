@@ -7,7 +7,7 @@ import {
   calculateSeverance,
   isoDate,
   type SeveranceInput,
-} from "./severance.logic.ts";
+} from "./severance.logic";
 
 function stripNumberLike(v: string) {
   const s = (v ?? "").toString().replace(/[^\d]/g, "");
