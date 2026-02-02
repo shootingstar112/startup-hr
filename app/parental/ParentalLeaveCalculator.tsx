@@ -438,7 +438,8 @@ const input: ParentalInput | null = useMemo(() => {
   const showResult = out != null;
 
   return (
-    <div className="rounded-2xl border bg-white p-6 shadow-sm">
+   <div className="rounded-2xl border bg-white p-3 sm:p-6 shadow-sm">
+
       <h2 className="text-xl font-black">육아휴직급여 계산기</h2>
       <p className="mt-2 text-slate-600 font-semibold">6+6은 월별로 부/모를 한 줄에 같이 보여줘(단위: 만원).</p>
 
@@ -686,7 +687,8 @@ const input: ParentalInput | null = useMemo(() => {
         </div>
 
         {/* Result panel */}
-        <div className="rounded-2xl bg-slate-900 p-6 text-white shadow-sm">
+        <div className="rounded-2xl bg-slate-900 p-3 sm:p-6 text-white shadow-sm">
+
           <div className="text-sm font-extrabold text-white/80">총 수령액(추정)</div>
 
           {!showResult ? (
@@ -714,7 +716,8 @@ const input: ParentalInput | null = useMemo(() => {
                   </div>
 
                   <div className="mt-2 overflow-hidden rounded-2xl bg-white">
-                    <div className="grid grid-cols-3 items-center gap-2 bg-slate-50 px-4 py-3 border-b border-black/10">
+                    <div className="grid grid-cols-3 items-center gap-2 bg-slate-50 px-2 sm:px-4 py-3 border-b border-black/10">
+
                       <div className="text-xs font-black text-slate-700">월</div>
                       <div className="text-right text-xs font-black text-slate-700">부</div>
                       <div className="text-right text-xs font-black text-slate-700">모</div>
@@ -753,7 +756,8 @@ const input: ParentalInput | null = useMemo(() => {
                         }
 
                         return (
-                          <div key={r.ym} className={`px-4 py-3 ${rowBg}`}>
+                          <div key={r.ym} className={`px-2 sm:px-4 py-3 ${rowBg}`}>
+
                             <div className="grid grid-cols-3 items-center gap-2">
                               <div>
                                 <div className="text-sm font-black text-slate-800">{fmtYYMM(r.ym)}</div>
@@ -803,14 +807,16 @@ const input: ParentalInput | null = useMemo(() => {
                   </div>
 
                   <div className="mt-2 overflow-hidden rounded-2xl bg-white">
-                    <div className="grid grid-cols-2 items-center gap-2 bg-slate-50 px-4 py-3 border-b border-black/10">
+                    <div className="grid grid-cols-2 items-center gap-2 bg-slate-50 px-2 sm:px-4 py-3 border-b border-black/10">
+
                       <div className="text-xs font-black text-slate-700">월</div>
                       <div className="text-right text-xs font-black text-slate-700">지급액</div>
                     </div>
 
                     <div className="divide-y divide-black/10">
                       {out.rows.map((r, idx) => (
-                        <div key={idx} className="px-4 py-3">
+                       <div key={idx} className="px-2 sm:px-4 py-3">
+
                           <div className="grid grid-cols-2 items-center gap-2">
                             <div className="text-sm font-black text-slate-800">{idx + 1}</div>
                             <div className="text-right text-sm font-black text-slate-900">{formatMan(r.amount)}</div>
