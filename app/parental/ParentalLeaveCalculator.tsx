@@ -294,65 +294,65 @@ export default function ParentalLeaveCalculator() {
     bWageWonParsed != null;
 
   /** ✅ 유효할 때만 input 생성 */
-/** ✅ 유효할 때만 input 생성 (아니면 null) */
-const input: ParentalInput | null = useMemo(() => {
-  if (mode === "six_plus_six") {
-    // ✅ TS 좁히기(진짜 number로 보장)
-    if (!birthRange) return null;
+  /** ✅ 유효할 때만 input 생성 (아니면 null) */
+  const input: ParentalInput | null = useMemo(() => {
+    if (mode === "six_plus_six") {
+      // ✅ TS 좁히기(진짜 number로 보장)
+      if (!birthRange) return null;
 
-    const am = aMonthsParsed;
-    const bm = bMonthsParsed;
-    const aw = aWageWonParsed;
-    const bw = bWageWonParsed;
+      const am = aMonthsParsed;
+      const bm = bMonthsParsed;
+      const aw = aWageWonParsed;
+      const bw = bWageWonParsed;
 
-    if (!sixValid) return null;
-    if (am == null || bm == null) return null;
-    if (aw == null || bw == null) return null;
+      if (!sixValid) return null;
+      if (am == null || bm == null) return null;
+      if (aw == null || bw == null) return null;
+
+      return {
+        mode,
+        childBirthYmd: childBirth, // ✅ 이거 때문에 에러났던 거
+        A: {
+          label: "A",
+          startYm: aStart,
+          months: am,
+          monthlyWage: aw,
+        },
+        B: {
+          label: "B",
+          startYm: bStart,
+          months: bm,
+          monthlyWage: bw,
+        },
+      };
+    }
+
+    // normal/single
+    if (!normalValid) return null;
+
+    const m = monthsParsed;
+    const w = wageWonParsed;
+    if (m == null || w == null) return null;
 
     return {
       mode,
-      childBirthYmd: childBirth, // ✅ 이거 때문에 에러났던 거
-      A: {
-        label: "A",
-        startYm: aStart,
-        months: am,
-        monthlyWage: aw,
-      },
-      B: {
-        label: "B",
-        startYm: bStart,
-        months: bm,
-        monthlyWage: bw,
-      },
+      months: m,
+      monthlyWage: w,
     };
-  }
-
-  // normal/single
-  if (!normalValid) return null;
-
-  const m = monthsParsed;
-  const w = wageWonParsed;
-  if (m == null || w == null) return null;
-
-  return {
+  }, [
     mode,
-    months: m,
-    monthlyWage: w,
-  };
-}, [
-  mode,
-  normalValid,
-  sixValid,
-  birthRange,
-  monthsParsed,
-  wageWonParsed,
-  aStart,
-  bStart,
-  aMonthsParsed,
-  bMonthsParsed,
-  aWageWonParsed,
-  bWageWonParsed,
-]);
+    normalValid,
+    sixValid,
+    birthRange,
+    monthsParsed,
+    wageWonParsed,
+    aStart,
+    bStart,
+    aMonthsParsed,
+    bMonthsParsed,
+    aWageWonParsed,
+    bWageWonParsed,
+  ]);
 
 
   const out = useMemo(() => (input ? calculateParentalLeave(input) : null), [input]);
@@ -438,7 +438,7 @@ const input: ParentalInput | null = useMemo(() => {
   const showResult = out != null;
 
   return (
-   <div className="rounded-2xl border bg-white p-3 sm:p-6 shadow-sm">
+    <div className="rounded-2xl border bg-white p-3 sm:p-6 shadow-sm">
 
       <h2 className="text-xl font-black">육아휴직급여 계산기</h2>
       <p className="mt-2 text-slate-600 font-semibold">6+6은 월별로 부/모를 한 줄에 같이 보여줘(단위: 만원).</p>
@@ -450,27 +450,24 @@ const input: ParentalInput | null = useMemo(() => {
           <button
             type="button"
             onClick={() => setMode("normal")}
-            className={`rounded-full px-4 py-2 text-sm font-black border ${
-              mode === "normal" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-900"
-            }`}
+            className={`rounded-full px-4 py-2 text-sm font-black border ${mode === "normal" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-900"
+              }`}
           >
             일반
           </button>
           <button
             type="button"
             onClick={() => setMode("single_parent")}
-            className={`rounded-full px-4 py-2 text-sm font-black border ${
-              mode === "single_parent" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-900"
-            }`}
+            className={`rounded-full px-4 py-2 text-sm font-black border ${mode === "single_parent" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-900"
+              }`}
           >
             한부모
           </button>
           <button
             type="button"
             onClick={() => setMode("six_plus_six")}
-            className={`rounded-full px-4 py-2 text-sm font-black border ${
-              mode === "six_plus_six" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-900"
-            }`}
+            className={`rounded-full px-4 py-2 text-sm font-black border ${mode === "six_plus_six" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-900"
+              }`}
           >
             6+6
           </button>
@@ -718,7 +715,7 @@ const input: ParentalInput | null = useMemo(() => {
                   <div className="mt-2 overflow-hidden rounded-2xl bg-white">
                     <div className="grid grid-cols-3 items-center gap-2 bg-slate-50 px-2 sm:px-4 py-3 border-b border-black/10">
 
-                      <div className="text-xs font-black text-slate-700">월</div>
+                      <div className="text-xs font-black text-slate-700 text-center">월</div>
                       <div className="text-right text-xs font-black text-slate-700">부</div>
                       <div className="text-right text-xs font-black text-slate-700">모</div>
                     </div>
@@ -728,16 +725,16 @@ const input: ParentalInput | null = useMemo(() => {
                         const isLight = sixUi.rangeLight.has(r.ym);
                         const isStrong = sixUi.rangeStrong.has(r.ym);
 
-                        // ✅ 모 출산 전 사용분: 연한 빨간 배경 (특례 영향 X 인지)
+                        // ✅ 모 출산 전 사용분: 연한 빨간 배경 ( X 인지)
                         const isPreBirthMother = !!r.isPreBirthMother;
 
                         const rowBg = isPreBirthMother
                           ? "bg-red-50"
                           : isStrong
-                          ? "bg-amber-100"
-                          : isLight
-                          ? "bg-amber-50"
-                          : "bg-white";
+                            ? "bg-amber-100"
+                            : isLight
+                              ? "bg-amber-50"
+                              : "bg-white";
 
                         const k = sixUi.monthLabel.get(r.ym);
 
@@ -759,17 +756,18 @@ const input: ParentalInput | null = useMemo(() => {
                           <div key={r.ym} className={`px-2 sm:px-4 py-3 ${rowBg}`}>
 
                             <div className="grid grid-cols-3 items-center gap-2">
-                              <div>
+                              <div className="text-center">
                                 <div className="text-sm font-black text-slate-800">{fmtYYMM(r.ym)}</div>
 
-                                {/* ✅ 출생월 이후부터만 (n개월) 표시 */}
-                                {k ? <div className="mt-0.5 text-[11px] font-semibold text-slate-500">({k}개월)</div> : null}
+                                {k ? (
+                                  <div className="mt-0.5 text-[11px] font-semibold text-slate-500">({k}개월)</div>
+                                ) : null}
 
-                                {/* ✅ 모 출산 전 사용분 라벨 */}
                                 {isPreBirthMother ? (
-                                  <div className="mt-0.5 text-[11px] font-bold text-red-600">특례 영향 없음(출산 전)</div>
+                                  <div className="mt-0.5 text-[11px] font-bold text-red-600">(출산 전·특례X)</div>
                                 ) : null}
                               </div>
+
 
                               <div className="text-right">
                                 <div className="text-sm font-black text-slate-900">{r.hasA ? formatMan(r.A) : "-"}</div>
@@ -807,20 +805,23 @@ const input: ParentalInput | null = useMemo(() => {
                   </div>
 
                   <div className="mt-2 overflow-hidden rounded-2xl bg-white">
-                    <div className="grid grid-cols-2 items-center gap-2 bg-slate-50 px-2 sm:px-4 py-3 border-b border-black/10">
-
-                      <div className="text-xs font-black text-slate-700">월</div>
-                      <div className="text-right text-xs font-black text-slate-700">지급액</div>
+                    <div className="grid grid-cols-3 items-center gap-2 bg-slate-50 px-2 sm:px-4 py-3 border-b border-black/10">
+                      <div className="text-xs font-black text-slate-700 text-center">개월</div>
+                      <div className="text-right text-xs font-black text-slate-700">상한(만원)</div>
+                      <div className="text-right text-xs font-black text-slate-700">지급액(만원)</div>
                     </div>
+
 
                     <div className="divide-y divide-black/10">
                       {out.rows.map((r, idx) => (
-                       <div key={idx} className="px-2 sm:px-4 py-3">
+                        <div key={idx} className="px-2 sm:px-4 py-3">
 
-                          <div className="grid grid-cols-2 items-center gap-2">
-                            <div className="text-sm font-black text-slate-800">{idx + 1}</div>
+                          <div className="grid grid-cols-3 items-center gap-2">
+                            <div className="text-sm font-black text-slate-800 text-center">{idx + 1}개월</div>
+                            <div className="text-right text-sm font-black text-slate-700">{formatMan(r.cap ?? 0)}</div>
                             <div className="text-right text-sm font-black text-slate-900">{formatMan(r.amount)}</div>
                           </div>
+
                         </div>
                       ))}
                     </div>

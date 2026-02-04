@@ -35,6 +35,10 @@ export type MonthPayRow = {
   monthIndex: number; // 개인 기준 n개월차(1..). "정산용 추가 row"는 0
   amount: number; // 최종 지급액(원)
   retroTopUp: number; // 그 달에 붙은 “정산/차액”(원) - 없으면 0
+
+  cap?: number;  // ✅ 월 상한(원) - normal/한부모/6+6 모두 표시용
+  floor?: number; // (선택) 하한도 표시하고 싶으면
+  rate?: number;  // (선택) 지급률도 표시하고 싶으면
 };
 
 export type ParentalOutput = {
@@ -171,7 +175,18 @@ function buildPersonRows(
     const monthIndex = i + 1;
     const ym = addYm(startYm, i);
     const amount = monthlyPayFromWage(modeForCaps, monthlyWage, monthIndex);
-    rows.push({ ym, who, monthIndex, amount, retroTopUp: 0 });
+    const { cap, floor } = caps(modeForCaps, monthIndex);
+
+    rows.push({
+      ym,
+      who,
+      monthIndex,
+      amount,
+      retroTopUp: 0,
+      cap,
+      floor,
+      rate: rateForMonthIndex(monthIndex),
+    });
   }
   return rows;
 }
@@ -202,8 +217,19 @@ export function calculateParentalLeave(input: ParentalInput): ParentalOutput {
       for (let i = 0; i < months; i++) {
         const monthIndex = i + 1;
         const amount = monthlyPayFromWage(mode, monthlyWage, monthIndex);
-        rows.push({ ym: "YYYY-MM", monthIndex, amount, retroTopUp: 0 });
+        const { cap, floor } = caps(mode, monthIndex);
+
+        rows.push({
+          ym: "",                 // ✅ normal/single은 실제 월 표시 안 할 거면 빈 값
+          monthIndex,
+          amount,
+          retroTopUp: 0,
+          cap,                    // ✅ 상한
+          floor,                  // (선택)
+          rate: rateForMonthIndex(monthIndex), // (선택)
+        });
       }
+
 
       const total = rows.reduce((s, r) => s + r.amount, 0);
       return { rows, total };
@@ -295,10 +321,20 @@ export function calculateParentalLeave(input: ParentalInput): ParentalOutput {
       const laterFinal: MonthPayRow[] = laterBase.map((r) => {
         const k = ymToK.get(r.ym);
         if (!k) return r; // 출산 전 or 겹침 밖: 영향 없음
+
         const six = monthlyPaySixPlusSix(laterPlan.monthlyWage, k);
         const inc = Math.max(0, six - r.amount);
-        return { ...r, amount: six, retroTopUp: inc };
+
+        return {
+          ...r,
+          amount: six,
+          retroTopUp: inc,
+          cap: capSixPlusSixFirst6(k), // ✅ 6+6 상한으로 덮어쓰기
+          floor: 700_000,              // ✅ 하한도 같이 맞춤
+          rate: 1.0,                   // ✅ 1~6은 100%
+        };
       });
+
 
       // ✅ 2) earlier 정산(차액): later의 k=3..m 달에 "그 달에" 지급
       const earlierTopUpRows: MonthPayRow[] = [];
