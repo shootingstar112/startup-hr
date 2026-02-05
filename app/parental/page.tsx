@@ -8,12 +8,7 @@ function Maternity() {
 
 export default function Page() {
   return (
-<<<<<<< HEAD
-    <main className="mx-auto max-w-5xl px-1 sm:px-4 py-10
-">
-=======
     <main className="mx-auto max-w-5xl px-1 sm:px-4 py-10">
->>>>>>> e733a27 (awerawer)
       <h1 className="text-3xl font-black">육아/출산</h1>
 
       <div className="mt-6">
