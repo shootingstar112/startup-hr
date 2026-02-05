@@ -177,8 +177,8 @@ export default function SalaryCalculator() {
     });
   }, [annualSalary, annualNonTax, dependents, u20Children, severanceIncluded]);
 
-  const monthlyNetPreview =
-    result.months > 0 ? Math.round(result.annualNet / result.months) : 0;
+const monthlyNetPreview = Math.round(result.annualNet / 12);
+
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
