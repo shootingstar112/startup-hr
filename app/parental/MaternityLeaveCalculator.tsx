@@ -1,34 +1,37 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { POLICY, calculateMaternityLeave } from "./maternityLeave.logic";
+import { calculateMaternityLeave, POLICY } from "./maternityLeave.logic";
 
 /** 표시 유틸 */
 function stripDigits(v: string) {
   return (v ?? "").toString().replace(/[^\d]/g, "");
 }
-function formatWon(n: number) {
-  return n.toLocaleString("ko-KR") + "원";
+
+// ✅ 표시용: n을 unit 단위로 올림 (기본: 천원 단위)
+function ceilToUnit(n: number, unit = 1000) {
+  if (!Number.isFinite(n) || unit <= 0) return 0;
+  return Math.ceil(n / unit) * unit;
 }
-function toMan(n: number) {
-  return Math.floor(n / 10_000);
+
+function formatWon(n: number, unit = 1000) {
+  const v = ceilToUnit(Math.floor(n), unit);
+  return `${v.toLocaleString("ko-KR")}원`;
 }
-function formatMan(n: number) {
-  return `${toMan(n).toLocaleString("ko-KR")}만`;
-}
+
 function formatWonCompact(n: number) {
-  // 카드 큰 숫자용: 원 그대로
-  return formatWon(n);
+  return formatWon(n, 1000);
+}
+
+// ✅ (1~60일) / (61~90일) / (1~75일) / (76~120일)
+function rangeLabel(startDay: number, endDay: number) {
+  return `(${startDay}~${endDay}일)`;
 }
 
 export default function MaternityLeaveCalculator() {
   const [wageText, setWageText] = useState("4000000"); // 원
-  const [isMultiple, setIsMultiple] = useState(true); // 스샷이 120일이라 기본 true
-  const [isPriority, setIsPriority] = useState(true);
-
-  // 정부지원일수(옵션) - 기본은 logic의 defaultGovtDays가 잡고, 사용자가 바꾸면 override
-  const [useCustomGovtDays, setUseCustomGovtDays] = useState(false);
-  const [govtDaysText, setGovtDaysText] = useState("");
+  const [isMultiple, setIsMultiple] = useState(false); // 다태아
+  const [isPriority, setIsPriority] = useState(true); // 우선지원대상기업
 
   const monthlyWage = useMemo(() => {
     const s = stripDigits(wageText);
@@ -37,72 +40,44 @@ export default function MaternityLeaveCalculator() {
     return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
   }, [wageText]);
 
-  const totalDays = isMultiple ? POLICY.MULTIPLE_DAYS : POLICY.SINGLE_DAYS;
-
-  const govtDays = useMemo(() => {
-    if (!useCustomGovtDays) return undefined;
-    const s = stripDigits(govtDaysText);
-    if (!s) return 0;
-    const n = Number(s);
-    if (!Number.isFinite(n)) return 0;
-    return Math.max(0, Math.min(totalDays, Math.floor(n)));
-  }, [useCustomGovtDays, govtDaysText, totalDays]);
-
   const out = useMemo(
     () =>
       calculateMaternityLeave({
         monthlyWage,
         isMultiple,
         isPriorityCompany: isPriority,
-        govtDays,
       }),
-    [monthlyWage, isMultiple, isPriority, govtDays]
+    [monthlyWage, isMultiple, isPriority]
   );
+  // ✅ 표시용(천원 올림) 숫자로 먼저 맞춰서 "합계/차액"도 표시상 딱 떨어지게
+  const employerPayDisp = ceilToUnit(out.employerPayToEmployee, 1000);
+  const refundDisp = ceilToUnit(out.govtRefundToEmployer, 1000);
+  const employerNetDisp = Math.max(0, employerPayDisp - refundDisp);
 
-  const progressGovt =
-    out.companyPayGross <= 0 ? 0 : Math.min(1, out.govtPay / out.companyPayGross);
+  const employerDaysLabel = isMultiple
+    ? `${POLICY.MULTIPLE_EMPLOYER_DAYS}일(≈2.5개월)`
+    : `${POLICY.SINGLE_EMPLOYER_DAYS}일(≈2개월)`;
+
+  const govtDaysLabel = isMultiple
+    ? `${POLICY.MULTIPLE_GOVT_DIRECT_DAYS}일(≈1.5개월)`
+    : `${POLICY.SINGLE_GOVT_DIRECT_DAYS}일(≈1개월)`;
+
+  // ✅ 구간 계산 (단태/다태 공통 처리)
+  const employerStart = 1;
+  const employerEnd = out.employerPayDays; // 단태 60 / 다태 75
+  const govtStart = out.employerPayDays + 1; // 단태 61 / 다태 76
+  const govtEnd = out.totalDays; // 단태 90 / 다태 120
 
   return (
     <div className="space-y-6">
-      {/* 상단 입력 섹션 */}
+      {/* 입력 섹션 */}
       <div className="rounded-2xl border bg-white p-3 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-black">출산전후휴가·급여 계산기</h2>
             <p className="mt-2 text-slate-600 font-semibold">
-              상/하한(가정) 반영해서 정부/회사 분담(추정)을 계산해.
+              단태: 2개월(회사) + 1개월(고용보험) · 다태: 2.5개월(회사) + 1.5개월(고용보험)
             </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard?.writeText(
-                  JSON.stringify(
-                    { monthlyWage, isMultiple, isPriority, govtDays: govtDays ?? null },
-                    null,
-                    2
-                  )
-                );
-              }}
-              className="rounded-full bg-slate-900 px-4 py-2 text-sm font-black text-white"
-            >
-              복사
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setWageText("4000000");
-                setIsMultiple(true);
-                setIsPriority(true);
-                setUseCustomGovtDays(false);
-                setGovtDaysText("");
-              }}
-              className="rounded-full border px-4 py-2 text-sm font-black text-slate-800"
-            >
-              초기화
-            </button>
           </div>
         </div>
 
@@ -177,18 +152,18 @@ export default function MaternityLeaveCalculator() {
             <div className="mt-3 text-xs font-semibold text-slate-600">
               휴가기간:{" "}
               <span className="font-black text-slate-900">
-                {isMultiple ? POLICY.MULTIPLE_DAYS : POLICY.SINGLE_DAYS}일
+                {isMultiple ? POLICY.MULTIPLE_TOTAL_DAYS : POLICY.SINGLE_TOTAL_DAYS}일
               </span>
             </div>
 
             <div className="mt-2 text-[11px] font-semibold text-slate-500">
-              * 출산 후 최소 확보일수(요건)는 케이스에 따라 별도 안내로 처리 추천
+              회사 유급: {employerDaysLabel} · 고용보험: {govtDaysLabel}
             </div>
           </div>
 
-          {/* 우선지원대상기업 + 정부지원일수 */}
+          {/* 우선지원 */}
           <div className="rounded-2xl border bg-slate-50 p-4">
-            <div className="text-xs font-black text-slate-600">우선지원대상기업(가정)</div>
+            <div className="text-xs font-black text-slate-600">우선지원대상기업(환급 여부)</div>
 
             <div className="mt-2 flex gap-2">
               <button
@@ -211,105 +186,106 @@ export default function MaternityLeaveCalculator() {
               </button>
             </div>
 
-            <div className="mt-4 flex items-center justify-between">
-              <div className="text-xs font-black text-slate-600">정부지원일수 직접 입력</div>
-              <button
-                type="button"
-                onClick={() => setUseCustomGovtDays((v) => !v)}
-                className={`rounded-full px-3 py-1 text-xs font-black border ${
-                  useCustomGovtDays ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-900"
-                }`}
-              >
-                {useCustomGovtDays ? "ON" : "OFF"}
-              </button>
+            <div className="mt-3 text-[11px] font-semibold text-slate-500">
+              * 해당이면 “회사 유급 구간”도 상한 범위 내 환급(고용보험 총부담이 커짐)
             </div>
-
-            {useCustomGovtDays ? (
-              <div className="mt-2">
-                <input
-                  inputMode="numeric"
-                  value={stripDigits(govtDaysText)}
-                  onChange={(e) => setGovtDaysText(e.target.value)}
-                  placeholder={`0 ~ ${totalDays}`}
-                  className="w-full rounded-xl border bg-white px-3 py-2 text-sm font-black outline-none focus:ring-2 focus:ring-slate-200"
-                />
-                <div className="mt-1 text-[11px] font-semibold text-slate-500">
-                  * 분담 기준 확정되면 이 입력은 숨기고 고정값으로 돌리면 됨
-                </div>
-              </div>
-            ) : (
-              <div className="mt-2 text-xs font-semibold text-slate-600">
-                기본 가정으로 계산됨(로직의 defaultGovtDays 사용)
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      {/* 하단 결과 섹션 */}
+      {/* 결과 섹션 */}
       <div className="rounded-2xl border bg-slate-900 p-3 sm:p-6 text-white shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-xs font-extrabold text-white/75">휴가 기간</div>
             <div className="mt-1 text-4xl font-black tracking-tight">{out.totalDays}일</div>
+            <div className="mt-2 text-xs font-semibold text-white/70">
+              회사 유급 <span className="font-black text-white">{out.employerPayDays}일</span> · 고용보험{" "}
+              <span className="font-black text-white">{out.govtDirectDays}일</span>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2 justify-end">
             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black">
-              일 통상임금(추정): {formatWon(out.dailyWage)}
+              일 통상임금: {formatWon(out.dailyWage)}
             </span>
             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black">
-              일 상한(추정): {formatWon(out.dailyCap)}
+              고용보험 일급(상한): {formatWon(out.govtDaily)}
             </span>
           </div>
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-3">
-          {/* 정부 지급 */}
+          {/* 회사 */}
           <div className="rounded-2xl bg-white/10 p-4">
-            <div className="text-xs font-black text-white/75">정부 지급(추정)</div>
-            <div className="mt-2 text-2xl font-black">{formatWonCompact(out.govtPay)}</div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full bg-indigo-400" style={{ width: `${Math.round(progressGovt * 100)}%` }} />
-            </div>
-            <div className="mt-2 text-[11px] font-semibold text-white/70">
-              정부지원일수: <span className="font-black text-white">{out.govtDays}일</span> · 일 기준:{" "}
-              <span className="font-black text-white">{formatWon(Math.max(out.dailyFloor, Math.min(out.dailyCap, out.dailyWage)))}</span>
+            <div className="text-xs font-black text-white/75">회사</div>
+            <div className="mt-2 text-2xl font-black">{formatWonCompact(employerNetDisp)}</div>
+
+            <div className="mt-1 text-[11px] font-semibold text-white/70">실질 회사부담(환급 반영)</div>
+
+            <div className="mt-3 space-y-1 text-[12px] font-semibold text-white/80">
+              <div className="flex items-center justify-between">
+                <span>근로자에게 지급{rangeLabel(employerStart, employerEnd)}</span>
+                <span className="font-black">{formatWon(out.employerPayToEmployee)}</span>
+              </div>
+
+              {/* ✅ 우선지원 아닐 땐 줄 자체를 안 보여줌 / ✅ 환급 라벨엔 range 제거 */}
+              {isPriority ? (
+                <div className="flex items-center justify-between">
+                  <span className="text-rose-300 font-black">고용보험 환급</span>
+                  <span className="text-rose-200 font-black">- {formatWon(out.govtRefundToEmployer)}</span>
+                </div>
+              ) : null}
             </div>
           </div>
 
-          {/* 회사 지급(총액) */}
+          {/* 정부(고용보험) */}
           <div className="rounded-2xl bg-white/10 p-4">
-            <div className="text-xs font-black text-white/75">회사 지급(총액 추정)</div>
-            <div className="mt-2 text-2xl font-black">{formatWonCompact(out.companyPayGross)}</div>
-            <div className="mt-2 text-[11px] font-semibold text-white/70">
-              가정: 회사가 통상임금 100% 지급(일={formatWon(out.dailyWage)})
+            <div className="text-xs font-black text-white/75">정부(고용보험)</div>
+            <div className="mt-2 text-2xl font-black">{formatWonCompact(out.govtTotalBurden)}</div>
+            <div className="mt-1 text-[11px] font-semibold text-white/70">고용보험 총 부담(직접지급 + 환급)</div>
+
+            <div className="mt-3 space-y-1 text-[12px] font-semibold text-white/80">
+              <div className="flex items-center justify-between">
+                <span>근로자 직접지급{rangeLabel(govtStart, govtEnd)}</span>
+                <span className="font-black">{formatWon(out.govtPayToEmployee)}</span>
+              </div>
+
+              {/* ✅ 우선지원일 때만 / ✅ 회사 환급 라벨엔 range 제거 */}
+              {isPriority ? (
+                <div className="flex items-center justify-between">
+                  <span className="text-rose-300 font-black">회사 환급</span>
+                  <span className="text-rose-200 font-black">{formatWon(out.govtRefundToEmployer)}</span>
+                </div>
+              ) : null}
             </div>
           </div>
 
-          {/* 회사 부담 */}
+          {/* 근로자 */}
           <div className="rounded-2xl bg-white/10 p-4">
-            <div className="text-xs font-black text-white/75">회사 부담(추정)</div>
-            <div className="mt-2 text-2xl font-black">{formatWonCompact(out.companyNetBurden)}</div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-full bg-amber-300"
-                style={{
-                  width:
-                    out.companyPayGross <= 0
-                      ? "0%"
-                      : `${Math.round((out.companyNetBurden / out.companyPayGross) * 100)}%`,
-                }}
-              />
-            </div>
-            <div className="mt-2 text-[11px] font-semibold text-white/70">
-              회사 순부담 = 회사지급 - 정부지급
+            <div className="text-xs font-black text-white/75">근로자</div>
+            <div className="mt-2 text-2xl font-black">{formatWonCompact(out.workerTotalTakeHome)}</div>
+            <div className="mt-1 text-[11px] font-semibold text-white/70">총 수령(회사 유급 + 고용보험)</div>
+
+            <div className="mt-3 space-y-1 text-[12px] font-semibold text-white/80">
+              <div className="flex items-center justify-between">
+                <span>회사 유급{rangeLabel(employerStart, employerEnd)}</span>
+                <span className="font-black">{formatWon(out.employerPayToEmployee)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>
+                  고용보험{rangeLabel(govtStart, govtEnd)}, 상한 적용
+                </span>
+                <span className="font-black">{formatWon(out.govtPayToEmployee)}</span>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="mt-4 text-[11px] font-semibold text-white/60">
-          * 현재는 “일할=월/30, 회사 100% 지급” 및 “정부지원일수 가정”을 사용함. 실제 분담은 케이스/사업장 요건에 따라 달라질 수 있음.
+          * 단태: 회사 60일(2개월) + 고용보험 30일(1개월) · 다태: 회사 75일(2.5개월) + 고용보험 45일(1.5개월)
+          <br />
+          * 우선지원 “해당”이면 회사 유급 구간도 상한 범위 내 환급이 잡혀 “고용보험 총부담”이 커짐
         </div>
       </div>
     </div>
