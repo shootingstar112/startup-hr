@@ -233,7 +233,7 @@ export default function ParentalLeaveCalculator() {
   const [aMonthsText, setAMonthsText] = useState("6");
   const [aWageManText, setAWageManText] = useState("500");
 
-  const [bStart, setBStart] = useState(addYm(ymNow(), 6));
+  const [bStart, setBStart] = useState(ymNow());
   const [bMonthsText, setBMonthsText] = useState("6");
   const [bWageManText, setBWageManText] = useState("500");
 
@@ -255,6 +255,25 @@ export default function ParentalLeaveCalculator() {
     () => (mode === "six_plus_six" ? allowedStartYmRangeFromBirth(childBirth) : null),
     [mode, childBirth]
   );
+const motherStartWarning = useMemo(() => {
+  if (mode !== "six_plus_six") return false;
+  if (!childBirth) return false;
+
+  const birth = parseYmdOrNull(childBirth);
+  if (!birth) return false;
+
+  // ✅ 출산일 + 60일
+  const limit = new Date(birth);
+  limit.setDate(limit.getDate() + 60);
+
+  // ✅ 60일이 포함되는 월
+  const limitYm = `${limit.getFullYear()}-${pad2(limit.getMonth() + 1)}`;
+
+  // ✅ 그 월 이전이면 전부 경고
+  return ymToIndex(bStart) <= ymToIndex(limitYm);
+}, [mode, childBirth, bStart]);
+
+
 
   /**
    * ✅ 입력 제한 룰
@@ -679,6 +698,25 @@ export default function ParentalLeaveCalculator() {
                   </label>
                 </div>
               </div>
+              {motherStartWarning && (
+                <div className="rounded-xl border border-red-300 bg-red-50 p-4">
+                  <div className="flex items-start gap-2">
+
+                    {/* ✅ 제목+본문을 세로로 묶기 */}
+                    <div className="flex-1">
+                      <div className="text-sm font-black text-red-700">
+                        ⚠️ 출산휴가 의무기간과 겹칠 수 있습니다
+                      </div>
+                      <div className="mt-1 text-xs font-semibold text-red-600/100 leading-relaxed">
+                        출산휴가 90일(다태아 120일) 중 출산 후 최소 45일(다태아 60일)은 법적으로 의무 사용 기간입니다.<br></br>
+                        출산휴가 기간에는 육아휴직을 동시에 사용할 수 없으며, 이 경우 실제 표보다 모의 육아휴직 사용 기간이 밀리며 6+6 특례 인정 및 지급 시점이 달라질 수 있습니다.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
             </>
           )}
         </div>
