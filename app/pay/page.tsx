@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import SectionTabs from "../components/SectionTabs";
 import PayCalculator from "./PayCalculator";
 import SalaryTableMonthly2026 from "./SalaryTableMonthly2026";
@@ -12,17 +13,15 @@ export default function Page() {
       <h1 className="text-3xl font-black">월급</h1>
 
       <div className="mt-6">
-        <SectionTabs
-          defaultTab="calc"
-          tabs={[
-            { key: "calc", label: "월급 계산기", content: <PayCalculator /> },
-            {
-              key: "table",
-              label: "2026 월급 실수령액표",
-              content: <PayTable2026 />,
-            },
-          ]}
-        />
+        <Suspense fallback={null}>
+          <SectionTabs
+            defaultTab="calc"
+            tabs={[
+              { key: "calc", label: "월급 계산기", content: <PayCalculator /> },
+              { key: "table", label: "2026 월급 실수령액표", content: <PayTable2026 /> },
+            ]}
+          />
+        </Suspense>
       </div>
     </main>
   );

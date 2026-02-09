@@ -1,6 +1,7 @@
+import { Suspense } from "react";
 import SectionTabs from "../components/SectionTabs";
 import ParentalLeaveCalculator from "./ParentalLeaveCalculator";
-import MaternityLeaveCalculator from "./MaternityLeaveCalculator"; // ✅ 같은 폴더
+import MaternityLeaveCalculator from "./MaternityLeaveCalculator";
 
 function Maternity() {
   return <MaternityLeaveCalculator />;
@@ -12,13 +13,15 @@ export default function Page() {
       <h1 className="text-3xl font-black">육아/출산</h1>
 
       <div className="mt-6">
-        <SectionTabs
-          defaultTab="maternity"
-          tabs={[
-            { key: "maternity", label: "출산휴가급여 계산기", content: <Maternity /> },
-            { key: "parental", label: "육아휴직급여 계산기", content: <ParentalLeaveCalculator /> },
-          ]}
-        />
+        <Suspense fallback={null}>
+          <SectionTabs
+            defaultTab="maternity"
+            tabs={[
+              { key: "maternity", label: "출산휴가급여 계산기", content: <Maternity /> },
+              { key: "parental", label: "육아휴직급여 계산기", content: <ParentalLeaveCalculator /> },
+            ]}
+          />
+        </Suspense>
       </div>
     </main>
   );
