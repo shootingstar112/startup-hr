@@ -36,6 +36,7 @@ const cards = [
       { label: "퇴직금 계산기", href: "/resignation?tab=severance" },
       { label: "휴업수당 계산기", href: "/resignation?tab=shutdown" },
       { label: "해고예고수당 계산기", href: "/resignation?tab=dismissal" },
+       { label: "실업급여 계산기", href: "/resignation?tab=unemployment" },
     ],
   },
   {
