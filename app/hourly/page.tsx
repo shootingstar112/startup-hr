@@ -1,4 +1,5 @@
 // app/hourly/page.tsx
+import { Suspense } from "react"; // ✅ 추가
 import SectionTabs from "../components/SectionTabs";
 import HourlyCalculator from "./HourlyCalculator";
 
@@ -21,13 +22,16 @@ export default function Page() {
       <h1 className="text-3xl font-black">시급</h1>
 
       <div className="mt-6">
-        <SectionTabs
-          defaultTab="calc"
-          tabs={[
-            { key: "calc", label: "시급 계산기", content: <HourlyCalc /> },
-            { key: "minwage", label: "2026 최저임금 계산기", content: <MinWage2026 /> },
-          ]}
-        />
+        {/* ✅ 이걸로 감싸 */}
+        <Suspense fallback={null}>
+          <SectionTabs
+            defaultTab="calc"
+            tabs={[
+              { key: "calc", label: "시급 계산기", content: <HourlyCalc /> },
+              { key: "minwage", label: "2026 최저임금 계산기", content: <MinWage2026 /> },
+            ]}
+          />
+        </Suspense>
       </div>
     </main>
   );
