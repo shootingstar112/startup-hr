@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type Tab = {
   key: string;
@@ -20,16 +20,17 @@ export default function SectionTabs({
   syncQuery?: boolean;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams(); // ✅ URL query 변화를 구독
   const [active, setActive] = useState(defaultTab);
 
+  // ✅ URL의 tab이 바뀔 때마다 active 갱신
   useEffect(() => {
     if (!syncQuery) return;
 
-    const q = new URLSearchParams(window.location.search).get("tab");
+    const q = searchParams.get("tab");
     if (q && tabs.some((t) => t.key === q)) setActive(q);
     else setActive(defaultTab);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [syncQuery, defaultTab, tabs]);
+  }, [syncQuery, defaultTab, tabs, searchParams]);
 
   const onClick = (key: string) => {
     setActive(key);

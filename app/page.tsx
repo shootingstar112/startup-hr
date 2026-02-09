@@ -113,7 +113,36 @@ export default function Home() {
         ))}
       </div>
 
-      <div style={{ marginTop: 28, textAlign: "center", color: "#64748b", fontWeight: 700 }}>
+
+            {/* ✅ 배너 */}
+      <div style={{ marginTop: 18, display: "flex", justifyContent: "center" }}>
+        <a
+          href="https://cafe.naver.com/startuphr"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "block",
+            width: 940,
+            maxWidth: "100%",
+            textDecoration: "none",
+          }}
+        >
+          <img
+            src="https://res.cloudinary.com/dy7hzszme/image/upload/v1770620095/wvjat0dxpgbiwlg3oif3.jpg"
+            alt="스타트업-HR 네이버카페 배너"
+            style={{
+              width: "100%",
+              height: "auto",
+              borderRadius: 14,
+              border: "1px solid #e5e7eb",
+              display: "block",
+            }}
+            loading="lazy"
+          />
+        </a>
+      </div>
+
+            <div style={{ marginTop: 28, textAlign: "center", color: "#64748b", fontWeight: 700 }}>
         기준년도: 2026 (최신 기준만 제공)
       </div>
     </main>
