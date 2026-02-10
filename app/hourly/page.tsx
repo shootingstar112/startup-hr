@@ -2,6 +2,7 @@
 import { Suspense } from "react"; // ✅ 추가
 import SectionTabs from "../components/SectionTabs";
 import HourlyCalculator from "./HourlyCalculator";
+import MinWageCalculator from "./MinWageCalculator";
 
 function HourlyCalc() {
   return <HourlyCalculator />;
@@ -11,10 +12,17 @@ function MinWage2026() {
   return (
     <div className="rounded-2xl border bg-white p-6 shadow-sm">
       <h2 className="text-xl font-black">2026 최저임금 계산기</h2>
-      <p className="mt-2 text-slate-600 font-semibold">여기에 내용 넣기</p>
+      <p className="mt-2 text-slate-600 font-semibold">
+        일급/주급/월급/연봉을 입력하면 “환산 시급”을 계산해서 최저임금 충족 여부를 바로 보여줘.
+      </p>
+
+      <div className="mt-6">
+        <MinWageCalculator />
+      </div>
     </div>
   );
 }
+
 
 export default function Page() {
   return (
