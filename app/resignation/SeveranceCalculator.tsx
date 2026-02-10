@@ -131,8 +131,7 @@ export default function SeveranceCalculator() {
 
   // ✅ iOS Safari input 깨짐 방지용 클래스
   const dateInputClass =
-    "mt-1 w-full max-w-full min-w-0 rounded-xl border px-3 py-2 font-semibold text-base outline-none focus:ring-2 focus:ring-slate-200";
-
+    "mt-1 w-full max-w-full min-w-0 appearance-none rounded-xl border px-3 py-2 font-semibold text-base outline-none focus:ring-2 focus:ring-slate-200";
 
   const textInputClass =
     "mt-1 w-full max-w-full min-w-0 rounded-xl border px-3 py-2 font-semibold text-base outline-none focus:ring-2 focus:ring-slate-200";

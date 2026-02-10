@@ -68,7 +68,7 @@ export default function DismissalPayCalculator() {
   const [weeklyWorkDays, setWeeklyWorkDays] = useState("5");
   const [dailyWorkHours, setDailyWorkHours] = useState("8");
 
-  // weekly (✅ 주 1개만 입력: 주 유급시간(주휴 포함))
+  // weekly
   const [weeklyHoursText, setWeeklyHoursText] = useState("");
 
   const input: DismissalPayInput = useMemo(
@@ -82,7 +82,7 @@ export default function DismissalPayCalculator() {
 
       mode,
 
-      weeklyWorkDays: stripNumberLike(weeklyWorkDays), // weekly 모드에서도 값은 들고 있지만 UI에서 안 받음
+      weeklyWorkDays: stripNumberLike(weeklyWorkDays),
       dailyWorkHours: stripNumberLike(dailyWorkHours),
 
       weeklyHours: stripNumberLike(weeklyHoursText),
@@ -102,6 +102,12 @@ export default function DismissalPayCalculator() {
 
   const result = useMemo(() => calculateDismissalPay(input), [input]);
 
+  // ✅ iOS Safari overflow/깨짐 방지
+  const iosSafeDateInput =
+    "mt-1 w-full max-w-full min-w-0 appearance-none rounded-xl border px-3 py-2 font-semibold text-base outline-none focus:ring-2 focus:ring-slate-200";
+  const iosSafeTextInput =
+    "mt-1 w-full max-w-full min-w-0 rounded-xl border px-3 py-2 font-semibold text-base outline-none focus:ring-2 focus:ring-slate-200";
+
   return (
     <div className="rounded-2xl border bg-white p-6 shadow-sm">
       <h2 className="text-xl font-black">해고예고수당 계산기</h2>
@@ -112,26 +118,27 @@ export default function DismissalPayCalculator() {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {/* Inputs */}
         <div className="space-y-5">
-          <div className="rounded-xl border p-4">
+          <div className="rounded-xl border p-4 overflow-hidden">
             <div className="text-sm font-black text-slate-800">기본 정보</div>
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="block">
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">입사일</div>
                 <input
                   type="date"
                   value={employmentStart}
                   onChange={(e) => setEmploymentStart(e.target.value)}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                  className={iosSafeDateInput}
                 />
               </label>
-              <label className="block">
+
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">해고일(종료일)</div>
                 <input
                   type="date"
                   value={dismissalDate}
                   onChange={(e) => setDismissalDate(e.target.value)}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                  className={iosSafeDateInput}
                 />
               </label>
             </div>
@@ -142,11 +149,11 @@ export default function DismissalPayCalculator() {
             </div>
           </div>
 
-          <div className="rounded-xl border p-4">
+          <div className="rounded-xl border p-4 overflow-hidden">
             <div className="text-sm font-black text-slate-800">통상임금(월, 세전)</div>
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="block">
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">월 기본급</div>
                 <input
                   inputMode="numeric"
@@ -156,11 +163,11 @@ export default function DismissalPayCalculator() {
                     const n = stripNumberLike(e.target.value);
                     setMonthlyBasePayText(formatNumberInput(n));
                   }}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                  className={iosSafeTextInput}
                 />
               </label>
 
-              <label className="block">
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">월 고정수당 합계</div>
                 <input
                   inputMode="numeric"
@@ -170,13 +177,13 @@ export default function DismissalPayCalculator() {
                     const n = stripNumberLike(e.target.value);
                     setMonthlyFixedAllowanceText(formatNumberInput(n));
                   }}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                  className={iosSafeTextInput}
                 />
               </label>
             </div>
 
             <div className="mt-3">
-              <label className="block">
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">연간상여금(연, 통상임금에 무조건 포함)</div>
                 <input
                   inputMode="numeric"
@@ -186,43 +193,42 @@ export default function DismissalPayCalculator() {
                     const n = stripNumberLike(e.target.value);
                     setAnnualBonusText(formatNumberInput(n));
                   }}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                  className={iosSafeTextInput}
                 />
               </label>
 
               <div className="mt-2 text-xs font-semibold text-slate-700">
-                월 통상임금(세전):{" "}
-                <span className="font-black text-slate-900">{formatWon(result.monthlyOrdinaryWage)}</span>
+                월 통상임금(세전): <span className="font-black text-slate-900">{formatWon(result.monthlyOrdinaryWage)}</span>
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl border p-4">
+          <div className="rounded-xl border p-4 overflow-hidden">
             <div className="text-sm font-black text-slate-800">근로시간 입력</div>
 
-            <div className="mt-3 flex gap-2">
+            <div className="mt-3 flex gap-2 flex-wrap">
               <Chip label="간편입력(주/일)" active={mode === "simple"} onClick={() => setMode("simple")} />
               <Chip label="직접입력(1주 유급시간)" active={mode === "weekly"} onClick={() => setMode("weekly")} />
             </div>
 
             {mode === "simple" ? (
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <label className="block">
+                <label className="block min-w-0">
                   <div className="text-xs font-bold text-slate-600">주 근무일수</div>
                   <input
                     inputMode="numeric"
                     value={weeklyWorkDays}
-                    onChange={(e) => setWeeklyWorkDays(e.target.value)}
-                    className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                    onChange={(e) => setWeeklyWorkDays(e.target.value.replace(/[^\d]/g, ""))}
+                    className={iosSafeTextInput}
                   />
                 </label>
-                <label className="block">
+                <label className="block min-w-0">
                   <div className="text-xs font-bold text-slate-600">1일 근로시간</div>
                   <input
                     inputMode="numeric"
                     value={dailyWorkHours}
-                    onChange={(e) => setDailyWorkHours(e.target.value)}
-                    className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                    onChange={(e) => setDailyWorkHours(e.target.value.replace(/[^\d]/g, ""))}
+                    className={iosSafeTextInput}
                   />
                 </label>
 
@@ -232,7 +238,7 @@ export default function DismissalPayCalculator() {
               </div>
             ) : (
               <div className="mt-3">
-                <label className="block">
+                <label className="block min-w-0">
                   <div className="text-xs font-bold text-slate-600">1주 소정근로시간(주휴 제외, 시간)</div>
                   <input
                     inputMode="numeric"
@@ -242,7 +248,7 @@ export default function DismissalPayCalculator() {
                       const n = stripNumberLike(e.target.value);
                       setWeeklyHoursText(n === 0 ? "" : String(n));
                     }}
-                    className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                    className={iosSafeTextInput}
                   />
                 </label>
                 <div className="mt-1 text-[11px] font-semibold text-slate-500">
@@ -250,7 +256,6 @@ export default function DismissalPayCalculator() {
                 </div>
               </div>
             )}
-
 
             <div className="mt-3 text-xs font-semibold text-slate-700">
               월 소정근로시간(환산):{" "}

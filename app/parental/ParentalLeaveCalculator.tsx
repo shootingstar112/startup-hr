@@ -251,6 +251,14 @@ export default function ParentalLeaveCalculator() {
 
   const normalValid = mode !== "six_plus_six" && monthsParsed != null && wageWonParsed != null;
 
+
+const iosSafeInput =
+  "mt-2 w-full max-w-full min-w-0 rounded-xl border px-3 py-2 font-semibold text-base outline-none focus:ring-2 focus:ring-slate-200";
+
+const iosSafeInputMt1 =
+  "mt-1 w-full max-w-full min-w-0 rounded-xl border px-3 py-2 font-semibold text-base outline-none focus:ring-2 focus:ring-slate-200";
+
+
   const birthRange = useMemo(
     () => (mode === "six_plus_six" ? allowedStartYmRangeFromBirth(childBirth) : null),
     [mode, childBirth]
@@ -551,7 +559,8 @@ const motherStartWarning = useMemo(() => {
                   type="date"
                   value={childBirth}
                   onChange={(e) => setChildBirth(e.target.value)}
-                  className="mt-2 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                  className={iosSafeInput}
+
                 />
 
                 <div className="mt-2 text-xs font-semibold text-slate-600">
@@ -588,7 +597,7 @@ const motherStartWarning = useMemo(() => {
                   </span>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                  <label className="block">
+                  <label className="block min-w-0">
                     <div className="text-xs font-bold text-slate-600">시작월</div>
                     <input
                       type="month"
@@ -596,10 +605,10 @@ const motherStartWarning = useMemo(() => {
                       min={birthRange?.birthYm} // ✅ 부: 출생월부터만
                       max={birthRange?.maxYm}
                       onChange={(e) => setAStart(e.target.value)}
-                      className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                      className={iosSafeInputMt1}
                     />
                   </label>
-                  <label className="block">
+                  <label className="block min-w-0">
                     <div className="text-xs font-bold text-slate-600">사용개월</div>
                     <input
                       inputMode="numeric"
@@ -609,20 +618,20 @@ const motherStartWarning = useMemo(() => {
                         if (v === "" || /^\d+$/.test(v)) setAMonthsText(v);
                       }}
                       placeholder="1~18"
-                      className="mt-1 w-full rounded-xl border px-3 py-2 font-black outline-none focus:ring-2 focus:ring-slate-200"
+                      className={"mt-1 w-full max-w-full min-w-0 rounded-xl border px-3 py-2 font-black text-base outline-none focus:ring-2 focus:ring-slate-200"}
                     />
                     {aMonthsText !== "" && aMonthsParsed == null && (
                       <div className="mt-1 text-[11px] font-bold text-red-600">1~18 사이로 입력</div>
                     )}
                   </label>
-                  <label className="block sm:col-span-3">
+                  <label className="block min-w-0 sm:col-span-3">
                     <div className="text-xs font-bold text-slate-600">월 통상임금(만원)</div>
                     <input
                       inputMode="numeric"
                       value={formatManInputText(aWageManText)}
                       onChange={(e) => setAWageManText(e.target.value)}
                       placeholder="예: 400"
-                      className="mt-1 w-full rounded-xl border px-3 py-2 font-black outline-none focus:ring-2 focus:ring-slate-200"
+                      className={"mt-1 w-full max-w-full min-w-0 rounded-xl border px-3 py-2 font-black text-base outline-none focus:ring-2 focus:ring-slate-200"}
                     />
                     <div className="mt-1 text-[11px] font-semibold text-slate-600">
                       {aWageWonParsed == null ? (
@@ -638,61 +647,72 @@ const motherStartWarning = useMemo(() => {
               </div>
 
               {/* 모 입력 카드 */}
-              <div className="rounded-xl border p-4">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-black text-white">
-                    모
-                  </span>
-                </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                  <label className="block">
-                    <div className="text-xs font-bold text-slate-600">시작월</div>
-                    <input
-                      type="month"
-                      value={bStart}
-                      // ✅ 모: 출산 전 가능 -> min 없음
-                      max={birthRange?.maxYm} // ✅ 18개월 이후는 막기
-                      onChange={(e) => setBStart(e.target.value)}
-                      className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
-                    />
-                  </label>
-                  <label className="block">
-                    <div className="text-xs font-bold text-slate-600">사용개월</div>
-                    <input
-                      inputMode="numeric"
-                      value={bMonthsText}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        if (v === "" || /^\d+$/.test(v)) setBMonthsText(v);
-                      }}
-                      placeholder="1~18"
-                      className="mt-1 w-full rounded-xl border px-3 py-2 font-black outline-none focus:ring-2 focus:ring-slate-200"
-                    />
-                    {bMonthsText !== "" && bMonthsParsed == null && (
-                      <div className="mt-1 text-[11px] font-bold text-red-600">1~18 사이로 입력</div>
-                    )}
-                  </label>
-                  <label className="block sm:col-span-3">
-                    <div className="text-xs font-bold text-slate-600">월 통상임금(만원)</div>
-                    <input
-                      inputMode="numeric"
-                      value={formatManInputText(bWageManText)}
-                      onChange={(e) => setBWageManText(e.target.value)}
-                      placeholder="예: 400"
-                      className="mt-1 w-full rounded-xl border px-3 py-2 font-black outline-none focus:ring-2 focus:ring-slate-200"
-                    />
-                    <div className="mt-1 text-[11px] font-semibold text-slate-600">
-                      {bWageWonParsed == null ? (
-                        <span className="font-black text-slate-900">입력 필요</span>
-                      ) : (
-                        <>
-                          표시: <span className="font-black text-slate-900">{toManWonTextFromWonOrNull(bWageWonParsed)}</span>
-                        </>
-                      )}
-                    </div>
-                  </label>
-                </div>
-              </div>
+<div className="rounded-xl border p-4 overflow-hidden">
+  <div className="flex items-center gap-2">
+    <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-black text-white">
+      모
+    </span>
+  </div>
+
+  <div className="mt-3 grid gap-3 sm:grid-cols-3">
+    <label className="block min-w-0">
+      <div className="text-xs font-bold text-slate-600">시작월</div>
+      <input
+        type="month"
+        value={bStart}
+        // ✅ 모: 출산 전 가능 -> min 없음
+        max={birthRange?.maxYm} // ✅ 18개월 이후는 막기
+        onChange={(e) => setBStart(e.target.value)}
+        className={iosSafeInputMt1}
+      />
+    </label>
+
+    <label className="block min-w-0">
+      <div className="text-xs font-bold text-slate-600">사용개월</div>
+      <input
+        inputMode="numeric"
+        value={bMonthsText}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === "" || /^\d+$/.test(v)) setBMonthsText(v);
+        }}
+        placeholder="1~18"
+        className={
+          "mt-1 w-full max-w-full min-w-0 rounded-xl border px-3 py-2 font-black text-base outline-none focus:ring-2 focus:ring-slate-200"
+        }
+      />
+      {bMonthsText !== "" && bMonthsParsed == null && (
+        <div className="mt-1 text-[11px] font-bold text-red-600">1~18 사이로 입력</div>
+      )}
+    </label>
+
+    <label className="block min-w-0 sm:col-span-3">
+      <div className="text-xs font-bold text-slate-600">월 통상임금(만원)</div>
+      <input
+        inputMode="numeric"
+        value={formatManInputText(bWageManText)}
+        onChange={(e) => setBWageManText(e.target.value)}
+        placeholder="예: 400"
+        className={
+          "mt-1 w-full max-w-full min-w-0 rounded-xl border px-3 py-2 font-black text-base outline-none focus:ring-2 focus:ring-slate-200"
+        }
+      />
+      <div className="mt-1 text-[11px] font-semibold text-slate-600">
+        {bWageWonParsed == null ? (
+          <span className="font-black text-slate-900">입력 필요</span>
+        ) : (
+          <>
+            표시:{" "}
+            <span className="font-black text-slate-900">
+              {toManWonTextFromWonOrNull(bWageWonParsed)}
+            </span>
+          </>
+        )}
+      </div>
+    </label>
+  </div>
+</div>
+
               {motherStartWarning && (
                 <div className="rounded-xl border border-red-300 bg-red-50 p-4">
                   <div className="flex items-start gap-2">

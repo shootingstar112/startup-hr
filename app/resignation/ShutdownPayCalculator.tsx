@@ -1,14 +1,18 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
-import { addMonths, isoDate, calculateShutdownPay, type ShutdownPayInput } from "./shutdown.logic";
+import {
+  addMonths,
+  isoDate,
+  calculateShutdownPay,
+  type ShutdownPayInput,
+} from "./shutdown.logic";
 
 function addDays(d: Date, days: number) {
   const x = new Date(d);
   x.setDate(x.getDate() + days);
   return x;
 }
-
 
 function stripNumberLike(v: string) {
   const s = (v ?? "").toString().replace(/[^\d]/g, "");
@@ -44,15 +48,15 @@ export default function ShutdownPayCalculator() {
   const [excludeDaysText, setExcludeDaysText] = useState("");
   const [shutdownDaysText, setShutdownDaysText] = useState("");
   const [rateText, setRateText] = useState("70"); // %
-useEffect(() => {
-  const end = new Date(last3mEnd + "T00:00:00");
-  if (!Number.isFinite(end.getTime())) return;
 
-  // ✅ 92일로 맞추기: 시작 = (종료일 - 3개월) + 1일
-  const start = addDays(addMonths(end, -3), 1);
+  useEffect(() => {
+    const end = new Date(last3mEnd + "T00:00:00");
+    if (!Number.isFinite(end.getTime())) return;
 
-  setLast3mStart(isoDate(start));
-}, [last3mEnd]);
+    // ✅ 92일로 맞추기: 시작 = (종료일 - 3개월) + 1일
+    const start = addDays(addMonths(end, -3), 1);
+    setLast3mStart(isoDate(start));
+  }, [last3mEnd]);
 
   const input: ShutdownPayInput = useMemo(
     () => ({
@@ -68,6 +72,12 @@ useEffect(() => {
 
   const result = useMemo(() => calculateShutdownPay(input), [input]);
 
+  // ✅ iOS Safari overflow/깨짐 방지
+  const iosSafeDateInput =
+    "mt-1 w-full max-w-full min-w-0 appearance-none rounded-xl border px-3 py-2 font-semibold text-base outline-none focus:ring-2 focus:ring-slate-200";
+  const iosSafeTextInput =
+    "mt-1 w-full max-w-full min-w-0 rounded-xl border px-3 py-2 font-semibold text-base outline-none focus:ring-2 focus:ring-slate-200";
+
   return (
     <div className="rounded-2xl border bg-white p-6 shadow-sm">
       <h2 className="text-xl font-black">휴업수당 계산기</h2>
@@ -78,24 +88,33 @@ useEffect(() => {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {/* Inputs */}
         <div className="space-y-5">
-          <div className="rounded-xl border p-4">
+          <div className="rounded-xl border p-4 overflow-hidden">
             <div className="text-sm font-black text-slate-800">최근 3개월(평균임금 산정)</div>
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="block">
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">기간 시작</div>
-                <input type="date" value={last3mStart} onChange={(e) => setLast3mStart(e.target.value)}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200" />
+                <input
+                  type="date"
+                  value={last3mStart}
+                  onChange={(e) => setLast3mStart(e.target.value)}
+                  className={iosSafeDateInput}
+                />
               </label>
-              <label className="block">
+
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">기간 종료</div>
-                <input type="date" value={last3mEnd} onChange={(e) => setLast3mEnd(e.target.value)}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200" />
+                <input
+                  type="date"
+                  value={last3mEnd}
+                  onChange={(e) => setLast3mEnd(e.target.value)}
+                  className={iosSafeDateInput}
+                />
               </label>
             </div>
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="block">
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">최근 3개월 임금총액(세전, 원)</div>
                 <input
                   inputMode="numeric"
@@ -105,11 +124,11 @@ useEffect(() => {
                     const n = stripNumberLike(e.target.value);
                     setLast3mWagesText(formatNumberInput(n));
                   }}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                  className={iosSafeTextInput}
                 />
               </label>
 
-              <label className="block">
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">산정기간 제외일수(선택)</div>
                 <input
                   inputMode="numeric"
@@ -119,17 +138,17 @@ useEffect(() => {
                     const n = stripNumberLike(e.target.value);
                     setExcludeDaysText(n === 0 ? "" : String(n));
                   }}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                  className={iosSafeTextInput}
                 />
               </label>
             </div>
           </div>
 
-          <div className="rounded-xl border p-4">
+          <div className="rounded-xl border p-4 overflow-hidden">
             <div className="text-sm font-black text-slate-800">휴업 조건</div>
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="block">
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">휴업일수</div>
                 <input
                   inputMode="numeric"
@@ -139,11 +158,11 @@ useEffect(() => {
                     const n = stripNumberLike(e.target.value);
                     setShutdownDaysText(n === 0 ? "" : String(n));
                   }}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                  className={iosSafeTextInput}
                 />
               </label>
 
-              <label className="block">
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">지급률(%)</div>
                 <input
                   inputMode="numeric"
@@ -153,7 +172,7 @@ useEffect(() => {
                     const n = stripNumberLike(e.target.value);
                     setRateText(n === 0 ? "" : String(n));
                   }}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                  className={iosSafeTextInput}
                 />
                 <div className="mt-1 text-[11px] font-semibold text-slate-500">
                   법정 최소 70% (회사 규정이 더 높으면 수정)
@@ -184,7 +203,9 @@ useEffect(() => {
               </div>
               <div className="flex items-center justify-between px-4 py-3">
                 <div className="text-sm font-black text-white/80">휴업일수</div>
-                <div className="text-sm font-black text-white">{(stripNumberLike(shutdownDaysText) || 0).toLocaleString("ko-KR")}일</div>
+                <div className="text-sm font-black text-white">
+                  {(stripNumberLike(shutdownDaysText) || 0).toLocaleString("ko-KR")}일
+                </div>
               </div>
             </div>
           </div>
