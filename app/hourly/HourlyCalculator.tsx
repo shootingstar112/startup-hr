@@ -337,9 +337,6 @@ export default function HourlyCalculator() {
         <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <div>
                 <h2 className="text-2xl font-black tracking-tight">시급 계산기</h2>
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                    시급 고정 + 근무조건으로 월/연/주/일을 한 번에 보여줌.
-                </p>
             </div>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-2">

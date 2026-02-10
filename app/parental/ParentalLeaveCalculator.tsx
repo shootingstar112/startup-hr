@@ -460,7 +460,6 @@ const motherStartWarning = useMemo(() => {
     <div className="rounded-2xl border bg-white p-3 sm:p-6 shadow-sm">
 
       <h2 className="text-xl font-black">육아휴직급여 계산기</h2>
-      <p className="mt-2 text-slate-600 font-semibold">6+6은 월별로 부/모를 한 줄에 같이 보여줘(단위: 만원).</p>
 
       {/* Mode */}
       <div className="mt-6 rounded-xl border p-4">
@@ -490,10 +489,6 @@ const motherStartWarning = useMemo(() => {
           >
             6+6
           </button>
-        </div>
-
-        <div className="mt-3 text-xs font-semibold text-slate-600">
-          상한/하한/지급률 설명은 아래에 따로 정리할 예정(일단 결과 UI부터).
         </div>
       </div>
 
@@ -561,7 +556,7 @@ const motherStartWarning = useMemo(() => {
 
                 <div className="mt-2 text-xs font-semibold text-slate-600">
                   {!birthRange ? (
-                    <span className="text-slate-500">출생일을 입력하면 신청 가능 기간이 표시돼.</span>
+                    <span className="text-slate-500">출생일을 입력하면 신청 가능 기간이 표시됨.</span>
                   ) : (
                     <>
                       신청 가능(부):{" "}
@@ -875,8 +870,7 @@ const motherStartWarning = useMemo(() => {
       <div className="mt-6 rounded-xl border bg-slate-50 p-4 text-sm font-semibold text-slate-700">
         <div className="font-black text-slate-900">참고</div>
         <ul className="mt-2 list-disc pl-5 space-y-1">
-          <li>입력값이 비었거나 범위 밖이면 결과/표는 표시되지 않음.</li>
-          <li>6+6 카운팅은 출생월부터 시작(출산 전 사용분은 특례 영향 없음).</li>
+          <li>6+6 카운팅은 출산 직후, 출산휴가 끝난 이후에 시작(출산 전 사용분은 특례 영향 없음).</li>
           <li>정산(소급)이 발생하는 달에는 (+정산)으로 표시.</li>
           <li>통상임금이 낮아 상한에 안 걸리면 정산/증액은 0이 될 수 있음.</li>
         </ul>

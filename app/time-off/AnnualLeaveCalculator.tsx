@@ -25,8 +25,8 @@ function BasisHint({ basis, hireDay }: { basis: AnnualLeaveBasis; hireDay: numbe
         <>
           <div className="font-black text-slate-900">입사일 기준</div>
           <ul className="mt-2 list-disc pl-5 space-y-1">
-            <li>1주년 전: 월차만</li>
-            <li>1주년부터: 연차만</li>
+            <li>1년 미만: 월차만</li>
+            <li>1년 이후: 연차만</li>
             <li>연차 발생일: 매년 입사 {dd}일</li>
           </ul>
         </>
@@ -34,9 +34,9 @@ function BasisHint({ basis, hireDay }: { basis: AnnualLeaveBasis; hireDay: numbe
         <>
           <div className="font-black text-slate-900">회계년도 기준(1/1)</div>
           <ul className="mt-2 list-disc pl-5 space-y-1">
-            <li>월차: 1주년 전까지 누적</li>
+            <li>월차: 1주년 전까지(입사기준일과 동일)</li>
             <li>연차: 매년 1/1 (입사 다음해 1/1은 비례)</li>
-            <li>따라서 특정 기간엔 월차+연차 공존 가능</li>
+            <li>따라서 1년 전까지 월차+연차 공존 가능</li>
           </ul>
         </>
       )}

@@ -119,7 +119,7 @@ export default function SeveranceCalculator() {
     <div className="rounded-2xl border bg-white p-6 shadow-sm">
       <h2 className="text-xl font-black">퇴직금 계산기</h2>
       <p className="mt-2 text-slate-600 font-semibold">
-        최근 3개월 임금총액/기간을 넣으면 평균임금(1일) 기준으로 퇴직금을 계산해.
+        최근 3개월 임금총액/기간을 넣으면 평균임금(1일) 기준으로 퇴직금을 계산.
         (연간상여금/연차수당 모두 최근 3개월분으로 안분(=1/4) 반영)
 
       </p>

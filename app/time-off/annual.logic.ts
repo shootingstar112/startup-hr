@@ -302,7 +302,7 @@ export function calculateAnnualLeave(
 
   const cur = summaryByRule(es, cd, basis);
 
-  const noteAfter23 = "※ 23년차부터는 매년 연차 25일로 동일해. (표는 전체 일정 표시)";
+  const noteAfter23 = "※ 23년차부터는 매년 연차 25일로 동일. (표는 전체 일정 표시)";
 
   return {
     ok: true,

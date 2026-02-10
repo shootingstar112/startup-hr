@@ -198,7 +198,7 @@ export default function UnemploymentBenefitCalculator() {
             <h2 className="text-xl font-black">실업급여(구직급여) 계산기</h2>
             <div className="mt-2 text-sm font-semibold text-slate-600">
                 {YEAR}년 기준으로 <span className="font-black">“A(임금기반) vs B(하한기반)”</span> 두 값을 비교해서
-                <span className="font-black"> 더 큰 값</span>이 1일 구직급여 일액이 돼.
+                <span className="font-black"> 더 큰 값</span>이 1일 구직급여 일액으로 계산.
             </div>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -456,7 +456,7 @@ export default function UnemploymentBenefitCalculator() {
 
 
                     <div className="mt-4 text-[11px] font-semibold text-white/70 leading-5">
-                        ※ 실제 수급 가능 여부/세부 계산은 관할 고용센터 판단에 따라 달라질 수 있어.
+                        ※ 실제 수급 가능 여부/세부 계산은 관할 고용센터 판단에 따라 달라질 수 있음.
                     </div>
                 </div>
             </div>

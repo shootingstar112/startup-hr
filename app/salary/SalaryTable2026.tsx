@@ -327,7 +327,7 @@ export default function SalaryTable2026() {
                             </div>
 
                             <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                                <div className="text-xs font-black text-slate-700">8~20 자녀</div>
+                                <div className="text-xs font-black text-slate-700">8~20세 자녀</div>
                                 <input
                                     inputMode="numeric"
                                     className="h-8 w-14 rounded-xl border border-slate-200 bg-white px-2 text-xs font-extrabold"

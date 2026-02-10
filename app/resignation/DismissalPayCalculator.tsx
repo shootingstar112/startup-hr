@@ -106,7 +106,7 @@ export default function DismissalPayCalculator() {
     <div className="rounded-2xl border bg-white p-6 shadow-sm">
       <h2 className="text-xl font-black">해고예고수당 계산기</h2>
       <p className="mt-2 text-slate-600 font-semibold">
-        통상임금(세전) 기준으로 <span className="font-black">30일분</span> 해고예고수당(세전)을 계산해.
+        통상임금(세전) 기준으로 <span className="font-black">30일분</span> 해고예고수당(세전)을 계산.
       </p>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">

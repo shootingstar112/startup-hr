@@ -174,7 +174,7 @@ export default function AnnualLeavePayCalculator() {
     <div className="rounded-2xl border bg-white p-6 shadow-sm">
       <h2 className="text-xl font-black">연차수당 계산기</h2>
       <p className="mt-2 text-slate-600 font-semibold">
-        <span className="font-black">1일 통상임금 × 미사용 연차일수</span>로 연차수당(세전)을 계산해.
+        <span className="font-black">1일 통상임금 × 미사용 연차일수</span>로 연차수당(세전)을 계산.
       </p>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
