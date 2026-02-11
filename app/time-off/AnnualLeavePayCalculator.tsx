@@ -4,6 +4,9 @@ import React, { useMemo, useState } from "react";
 import { calculateAnnualLeave, type AnnualLeaveBasis } from "./annual.logic";
 import { calculateDismissalPay, type DismissalPayInput } from "../resignation/dismissal.logic"; // 경로 맞춰줘
 
+const iosSafeDateInput =
+  "mt-1 w-full max-w-full min-w-0 appearance-none rounded-xl border px-3 py-2 font-semibold text-base outline-none focus:ring-2 focus:ring-slate-200";
+
 function stripNumberLike(v: string) {
   const s = (v ?? "").toString().replace(/[^\d.]/g, "");
   if (!s) return 0;
@@ -181,7 +184,7 @@ export default function AnnualLeavePayCalculator() {
         {/* Inputs */}
         <div className="space-y-5">
           {/* 연차 정보 */}
-          <div className="rounded-xl border p-4">
+          <div className="rounded-xl border p-4 overflow-hidden">
             <div className="text-sm font-black text-slate-800">연차 계산 기준</div>
 
             <div className="mt-3 flex gap-2">
@@ -189,24 +192,25 @@ export default function AnnualLeavePayCalculator() {
               <BasisChip label="회계년도" active={basis === "fiscal"} onClick={() => setBasis("fiscal")} />
             </div>
 
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="block">
+            {/* ✅ iOS safe: overflow-hidden + label min-w-0 + input appearance-none/max-w/min-w */}
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 overflow-hidden">
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">입사일</div>
                 <input
                   type="date"
                   value={employmentStart}
                   onChange={(e) => setEmploymentStart(e.target.value)}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                  className={iosSafeDateInput}
                 />
               </label>
 
-              <label className="block">
+              <label className="block min-w-0">
                 <div className="text-xs font-bold text-slate-600">계산일</div>
                 <input
                   type="date"
                   value={calcDate}
                   onChange={(e) => setCalcDate(e.target.value)}
-                  className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+                  className={iosSafeDateInput}
                 />
               </label>
             </div>
@@ -224,9 +228,7 @@ export default function AnnualLeavePayCalculator() {
 
               <div className="rounded-xl border bg-slate-50 p-4">
                 <div className="text-xs font-bold text-slate-600">미사용 연차일수</div>
-                <div className="mt-2 text-lg font-black text-slate-900">
-                  {formatDays(payableLeaveDays)}일
-                </div>
+                <div className="mt-2 text-lg font-black text-slate-900">{formatDays(payableLeaveDays)}일</div>
                 <div className="mt-1 text-xs font-semibold text-slate-500">
                   연차 {formatDays(totalLeaveDays)}일 − 사용 {formatDays(usedLeaveDays)}일
                 </div>
@@ -234,8 +236,7 @@ export default function AnnualLeavePayCalculator() {
             </div>
 
             <div className="mt-3 text-xs font-semibold text-slate-600">
-              근무기간:{" "}
-              <span className="font-black text-slate-900">{leave.ok ? leave.serviceYMDText : "-"}</span>
+              근무기간: <span className="font-black text-slate-900">{leave.ok ? leave.serviceYMDText : "-"}</span>
               <span className="text-slate-500"> (근속연수 {leave.ok ? leave.serviceFullYears : 0}년)</span>
             </div>
           </div>
@@ -290,8 +291,7 @@ export default function AnnualLeavePayCalculator() {
               </label>
 
               <div className="mt-2 text-xs font-semibold text-slate-700">
-                월 통상임금(세전):{" "}
-                <span className="font-black text-slate-900">{formatWon(wage.monthlyOrdinaryWage)}</span>
+                월 통상임금(세전): <span className="font-black text-slate-900">{formatWon(wage.monthlyOrdinaryWage)}</span>
               </div>
             </div>
           </div>
@@ -354,8 +354,7 @@ export default function AnnualLeavePayCalculator() {
             )}
 
             <div className="mt-3 text-xs font-semibold text-slate-700">
-              월 소정근로시간(환산):{" "}
-              <span className="font-black text-slate-900">{wage.monthlyHours.toLocaleString("ko-KR")}</span>시간
+              월 소정근로시간(환산): <span className="font-black text-slate-900">{wage.monthlyHours.toLocaleString("ko-KR")}</span>시간
             </div>
           </div>
         </div>
@@ -371,8 +370,22 @@ export default function AnnualLeavePayCalculator() {
               <Row label="미사용 연차일수" value={`${formatDays(payableLeaveDays)}일`} />
 
               <Row label="주 근로시간(주소정)" value={`${Math.round(withHoliday.weeklyWorkHours)}시간`} />
-              <Row label="주휴시간" value={`${withHoliday.weeklyHolidayHours % 1 === 0 ? Math.round(withHoliday.weeklyHolidayHours) : withHoliday.weeklyHolidayHours.toFixed(1)}시간`} />
-              <Row label="주 유급시간(주휴 포함)" value={`${withHoliday.weeklyPaidHours % 1 === 0 ? Math.round(withHoliday.weeklyPaidHours) : withHoliday.weeklyPaidHours.toFixed(1)}시간`} />
+              <Row
+                label="주휴시간"
+                value={`${
+                  withHoliday.weeklyHolidayHours % 1 === 0
+                    ? Math.round(withHoliday.weeklyHolidayHours)
+                    : withHoliday.weeklyHolidayHours.toFixed(1)
+                }시간`}
+              />
+              <Row
+                label="주 유급시간(주휴 포함)"
+                value={`${
+                  withHoliday.weeklyPaidHours % 1 === 0
+                    ? Math.round(withHoliday.weeklyPaidHours)
+                    : withHoliday.weeklyPaidHours.toFixed(1)
+                }시간`}
+              />
 
               <Row label="월 소정근로시간(환산)" value={`${wage.monthlyHours.toLocaleString("ko-KR")}시간`} />
               <Row label="월 통상임금(세전)" value={formatWon(wage.monthlyOrdinaryWage)} />

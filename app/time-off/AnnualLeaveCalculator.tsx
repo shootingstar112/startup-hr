@@ -3,6 +3,9 @@
 import React, { useMemo, useState } from "react";
 import { calculateAnnualLeave, type AnnualLeaveBasis } from "./annual.logic";
 
+const iosSafeDateInput =
+  "mt-1 w-full max-w-full min-w-0 appearance-none rounded-xl border px-3 py-2 font-semibold text-base outline-none focus:ring-2 focus:ring-slate-200";
+
 function formatDays(n: number) {
   if (!Number.isFinite(n)) return "0";
   const isInt = Math.abs(n - Math.round(n)) < 1e-9;
@@ -67,24 +70,25 @@ export default function AnnualLeaveCalculator() {
     <div className="rounded-2xl border bg-white p-4 shadow-sm">
       <h2 className="text-xl font-black">연차 계산기</h2>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <label>
+      {/* ✅ iOS safe: overflow-hidden + label min-w-0 + input appearance-none/max-w/min-w */}
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 overflow-hidden">
+        <label className="min-w-0">
           <div className="text-xs font-bold text-slate-600">입사일</div>
           <input
             type="date"
             value={employmentStart}
             onChange={(e) => setEmploymentStart(e.target.value)}
-            className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+            className={iosSafeDateInput}
           />
         </label>
 
-        <label>
+        <label className="min-w-0">
           <div className="text-xs font-bold text-slate-600">계산일</div>
           <input
             type="date"
             value={calcDate}
             onChange={(e) => setCalcDate(e.target.value)}
-            className="mt-1 w-full rounded-xl border px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-slate-200"
+            className={iosSafeDateInput}
           />
         </label>
       </div>
@@ -168,7 +172,7 @@ export default function AnnualLeaveCalculator() {
 
       <div className="mt-3 text-xs font-semibold text-slate-500">{result.noteAfter23}</div>
       <div className="mt-2 text-xs font-semibold text-slate-500">
-        ※ 회사 규정에 따라 “입사일 기준” 또는 “회계년도(1/1) 기준” 중 하나로 운영할 수 있어.
+        ※ 회사 규정에 따라 “입사일 기준” 또는 “회계년도(1/1) 기준” 중 하나로 운영.
       </div>
     </div>
   );
